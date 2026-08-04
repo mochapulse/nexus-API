@@ -1,0 +1,1 @@
+"""Library package — reusable helpers and utilities shared across the API layer."""
