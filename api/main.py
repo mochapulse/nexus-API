@@ -1,19 +1,21 @@
 """Nexus API application entry point.
 
 A FastAPI server that serves health, telemetry, and power-management
-endpoints backed by JSONC response templates.  Run with::
+endpoints backed by JSONC response templates.  All business routes live
+under the versioned ``/api/v1`` prefix; only the favicon stays at the
+root.  Run with::
 
     python -m api.main
 """
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, FastAPI
+from fastapi.responses import FileResponse, JSONResponse, Response
 import psutil
 
 from api.config.paths import DOTENV_PATH, FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
 from api.hw.stats import get_system_metrics
-from api.hw.power import system_poweroff
+from api.hw.power import system_poweroff, system_sleep
 
 ensure_dotenv()
 
@@ -27,47 +29,72 @@ app = FastAPI(
     debug=runtime.DEBUG,
 )
 
+api_v1_router = APIRouter(prefix="/api/v1")
 
-@app.get("/")
+
+@api_v1_router.get("/")
 def read_root():
     """Root health-check — confirms the API is alive."""
     return {"msg": f"Nexus API is running! ({runtime.APP_NAME})"}
+
+
+@api_v1_router.get("/health")
+def get_health():
+    """Return the ``get-health`` JSONC template."""
+    return load_template("get-health")
+
+
+@api_v1_router.post("/power/poweroff")
+def post_poweroff():
+    """Power off the host system.
+
+    When ``DEBUG`` is enabled, the real command is skipped and a stub
+    template is returned instead, so the machine cannot be shut down
+    accidentally during development.
+    """
+    if runtime.DEBUG:
+        return load_template("post-poweroff")
+    error = system_poweroff()
+    if error:
+        return JSONResponse(status_code=500, content={"status": "error", "detail": error})
+    return load_template("post-poweroff")
+
+
+@api_v1_router.post("/power/sleep")
+def post_sleep():
+    """Put the host system into S3 (suspend-to-RAM) sleep.
+
+    When ``DEBUG`` is enabled, the real command is skipped and a stub
+    template is returned instead, so the machine cannot be suspended
+    accidentally during development.
+    """
+    if runtime.DEBUG:
+        return load_template("post-sleep")
+    error = system_sleep()
+    if error:
+        return JSONResponse(status_code=500, content={"status": "error", "detail": error})
+    return load_template("post-sleep")
+
+
+@api_v1_router.post("/telemetry")
+async def post_telemetry():
+    """Return live hardware telemetry (CPU, RAM, swap, GPU).
+
+    The payload is pre-serialized by orjson in the metrics worker and
+    served as raw bytes with a standard ``application/json`` media type,
+    so no re-serialization occurs on the response path.
+    """
+    body = await get_system_metrics(pretty=True, return_bytes=True)
+    return Response(content=body, media_type="application/json")
+
+
+app.include_router(api_v1_router)
 
 
 @app.get("/favicon.ico")
 async def favicon():
     """Serve the Nexus favicon as an SVG."""
     return FileResponse(FAVICON_PATH, media_type="image/svg+xml")
-
-
-@app.get("/health")
-def get_health():
-    """Return the ``get-health`` JSONC template."""
-    return load_template("get-health")
-
-
-@app.post("/power/poweroff")
-def post_poweroff():
-    """Return the ``post-poweroff`` JSONC template."""
-    if runtime.DEBUG:
-        print("Dummy POST /power/poweroff")
-        return load_template("post-poweroff")
-    else:
-        
-        system_poweroff()
-        return load_template("post-poweroff")
-
-
-@app.post("/power/sleep")
-def post_sleep():
-    """Return the ``post-sleep`` JSONC template."""
-    return load_template("post-sleep")
-
-
-@app.post("/telemetry")
-async def post_telemetry():
-
-    return await get_system_metrics(pretty=True)
 
 
 if __name__ == "__main__":

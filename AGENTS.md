@@ -80,6 +80,12 @@ sphinx-build -b html docs/ docs/_build/html -W # build (warnings as errors, same
 
 ## Architecture Patterns
 
+### Versioned Routing (api/main.py)
+
+All business routes live on `api_v1_router = APIRouter(prefix="/api/v1")`,
+mounted via `app.include_router(api_v1_router)`. Only `/favicon.ico` stays on
+the root app. New endpoints go on the router, not on `app` directly.
+
 ### Hardware Metrics (api/hw/stats.py)
 
 `get_system_metrics()` is an async function that offloads blocking C-driver calls
@@ -148,11 +154,14 @@ Single workflow `docs.yml`:
 
 ## Implementation Status
 
-- **Telemetry is live** (`/telemetry`): `api/hw/stats.py` returns real CPU, RAM,
-  swap, and GPU metrics via psutil, NVML, and AMD SMI. AMD SMI gracefully degrades
-  when `libamd_smi.so` is absent.
-- **Power management** (`/power/poweroff`, `/power/sleep`): Logic exists in
-  `api/hw/power.py` (systemctl wrappers) but endpoints still return template stubs.
+- **Telemetry is live** (`/api/v1/telemetry`): `api/hw/stats.py` returns real CPU,
+  RAM, swap, and GPU metrics via psutil, NVML, and AMD SMI. AMD SMI gracefully
+  degrades when `libamd_smi.so` is absent.
+- **Power management is wired and DEBUG-gated** (`/api/v1/power/poweroff`,
+  `/api/v1/power/sleep`): `api/hw/power.py` wraps `systemctl poweroff/suspend`.
+  When `DEBUG=true`, both endpoints return stub templates instead of executing
+  the real commands — accidental shutdowns during development are impossible.
+  On systemctl failure the endpoints return HTTP 500 with the error detail.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.

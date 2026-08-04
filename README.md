@@ -8,11 +8,11 @@ and a React + TypeScript + Vite frontend.
 
 > **Real telemetry is live — power management and frontend are in progress.**
 
-- **Telemetry** (`/telemetry`): Returns live hardware metrics (CPU, RAM, swap,
-  NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/stats.py`.
-- **Power management** (`/power/poweroff`, `/power/sleep`): Logic exists in
-  `api/hw/power.py` (calls `systemctl poweroff/suspend`) but the endpoints
-  still return JSONC template stubs — not yet wired to the real functions.
+- **Telemetry** (`/api/v1/telemetry`): Returns live hardware metrics (CPU, RAM,
+  swap, NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/stats.py`.
+- **Power management** (`/api/v1/power/poweroff`, `/api/v1/power/sleep`): Wired
+  to `api/hw/power.py` (`systemctl poweroff/suspend`). Gated by `DEBUG` — in dev
+  mode the endpoints return stub templates instead of executing real commands.
 - **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
   no API integration.
 - **Sentry**: SDK installed but not wired into the app.
@@ -42,13 +42,21 @@ nexus-API/
 
 ## API Endpoints
 
-| Method | Path               | Description                           | Backend           |
-|--------|---------------------|---------------------------------------|-------------------|
-| GET    | `/`                 | Root health-check                     | —                 |
-| GET    | `/health`           | Health status                         | template stub     |
-| POST   | `/power/poweroff`   | Initiate system poweroff              | template stub     |
-| POST   | `/power/sleep`      | Initiate system sleep                 | template stub     |
-| POST   | `/telemetry`        | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
+All business routes live under the versioned `/api/v1` prefix. Only the
+favicon is served from the root.
+
+| Method | Path                        | Description                           | Backend           |
+|--------|------------------------------|---------------------------------------|-------------------|
+| GET    | `/api/v1/`                   | Root health-check                     | —                 |
+| GET    | `/api/v1/health`             | Health status                         | template stub     |
+| POST   | `/api/v1/power/poweroff`     | Initiate system poweroff              | `api/hw/power.py` |
+| POST   | `/api/v1/power/sleep`        | Initiate system sleep                 | `api/hw/power.py` |
+| POST   | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
+| GET    | `/favicon.ico`               | SVG favicon                           | static file       |
+
+Power endpoints are **DEBUG-gated**: when `DEBUG=true` in `.env` they return
+stub templates instead of executing real `systemctl` commands, so the host
+cannot be shut down or suspended accidentally during development.
 
 ## Prerequisites
 
@@ -135,13 +143,13 @@ The server starts on `http://0.0.0.0:8000` (configurable via `PORT` in `.env`).
 Verify it's running:
 
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8000/api/v1/
 # {"msg":"Nexus API is running! (Nexus API)"}
 
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
 # {"status":"up","healthy":true,"timestamp":1718800000}
 
-curl -X POST http://localhost:8000/telemetry
+curl -X POST http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}
 ```
 
