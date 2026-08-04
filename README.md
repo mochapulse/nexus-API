@@ -30,7 +30,9 @@ nexus-API/
 │   ├── hw/              # Hardware interfaces (telemetry, power)
 │   │   ├── stats.py     # psutil + NVML + AMD SMI metrics collector
 │   │   └── power.py     # systemctl poweroff / suspend wrappers
-│   └── lib/             # Helpers (JSONC template loader)
+│   ├── lib/             # Helpers (JSONC template loader)
+│   └── test/            # pytest suite (auth, health, telemetry, power)
+├── conftest.py          # Shared pytest fixtures
 ├── daemon/              # Systemd unit for production deployment
 │   └── nexus-api.service
 ├── frontend/            # React 19 + TypeScript + Vite
@@ -169,7 +171,7 @@ curl -i http://localhost:8000/        # 307 → /docs (Swagger UI) — public
 
 # All /api/v1 endpoints need the key from api/.env:
 curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/health
-# {"status":"ok","version":"0.1.0","uptime_seconds":655,"timestamp":1718800000}
+# {"status":"ok","version":"0.2.0","uptime_seconds":655,"timestamp":1718800000}
 
 curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}

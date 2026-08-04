@@ -15,16 +15,26 @@ with a React dashboard frontend.
 
 ```
 api/                    FastAPI backend
-  main.py               App & route definitions (FastAPI instance)
+  __init__.py           __version__ via git describe + _FALLBACK_VERSION
+  main.py               App & route definitions, verify_api_key dependency
   config/
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
-    runtime.py           APP_NAME, PORT, DEBUG from dotenv
+    runtime.py           APP_NAME, PORT, DEBUG, API_KEY from dotenv
   hw/
     stats.py             Real hardware metrics: psutil + NVML + AMD SMI
     power.py             systemctl poweroff / suspend wrappers
   lib/
     templates.py         load_template(name) — reads JSONC, strips comments, returns dict
+  test/
+    test_auth.py         X-API-Key matrix, public routes, redirects
+    test_health.py       Liveness payload, no-store, monotonic uptime
+    test_telemetry.py    Payload shape, GPU schema
+    test_power.py        DEBUG-gating, production paths, error handling
+  .env.example           Committed template (APP_NAME, PORT, DEBUG, API_KEY)
+  .env                   Gitignored local config (ensure_dotenv copies from example)
+conftest.py              Root pytest fixtures (client, auth_headers) + sys.path bootstrap
+requirements.txt         Fully pinned Python deps (incl. pytest)
 cmd/
   install.sh             Bootstrap script: packages → venv → pip → polkit → systemd
                          Use -dev flag to skip polkit and systemd installation
@@ -45,6 +55,7 @@ templates/
   get-telemetry.jsonc    Telemetry data stub (CPU, RAM, GPU, uptime)
   post-poweroff.jsonc    Poweroff triggered stub
   post-sleep.jsonc       Sleep triggered stub
+SERVER_ACCESS.md         Tracked but EMPTY placeholder — keep credentials out of git!
 .github/workflows/
   docs.yml               Sphinx build + GitHub Pages deploy
 ```

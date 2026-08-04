@@ -1,7 +1,7 @@
 """JSONC template loader for API response stubs.
 
 Template files live in ``<project>/templates/`` and follow the naming
-convention ``{method}-{name}.jsonc`` (e.g. ``get-health.jsonc``).
+convention ``{method}-{name}.jsonc`` (e.g. ``post-poweroff.jsonc``).
 Comments (``// line`` and ``/* block */``) are stripped before parsing.
 
 Functions
