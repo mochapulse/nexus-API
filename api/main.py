@@ -9,6 +9,7 @@ root.  Run with::
 """
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 import psutil
 
@@ -27,6 +28,13 @@ psutil.cpu_percent(interval=None)
 app = FastAPI(
     title=runtime.APP_NAME,
     debug=runtime.DEBUG,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 api_v1_router = APIRouter(prefix="/api/v1")
