@@ -1,0 +1,28 @@
+{
+  "uptime_seconds": 345600,
+  "cpu": {
+    "overall_usage_percent": 12.5,
+    "per_core_percent": [15.2, 8.0, 22.1, 4.5]
+  },
+  "ram": {
+    "total_bytes": 33685815296,
+    "used_bytes": 8589934592,
+    "free_bytes": 25095880704,
+    "usage_percent": 25.5
+  },
+  "swap": {
+    "total_bytes": 8589934592,
+    "used_bytes": 0,
+    "usage_percent": 0.0
+  },
+  "gpu": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 4090",
+      "gpu_usage_percent": 45,
+      "vram_used_bytes": 4294967296,
+      "vram_total_bytes": 25769803776,
+      "temperature_c": 58
+    }
+  ]
+}
