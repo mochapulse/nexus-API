@@ -60,4 +60,5 @@ def post_telemetry():
 
 if __name__ == "__main__":
     import uvicorn
+    print(f"Listening WSL->Windows DEV on http://localhost:{runtime.PORT}")
     uvicorn.run("api.main:app", host="0.0.0.0", port=runtime.PORT, reload=runtime.DEBUG)
