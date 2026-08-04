@@ -41,7 +41,6 @@ frontend/
   public/favicon.svg     Shared favicon (served by API and frontend)
   vite.config.ts         Vite config (React plugin only, no proxy yet)
 templates/
-  get-health.jsonc       Health check response stub
   get-telemetry.jsonc    Telemetry data stub (CPU, RAM, GPU, uptime)
   post-poweroff.jsonc    Poweroff triggered stub
   post-sleep.jsonc       Sleep triggered stub
@@ -83,8 +82,10 @@ sphinx-build -b html docs/ docs/_build/html -W # build (warnings as errors, same
 ### Versioned Routing (api/main.py)
 
 All business routes live on `api_v1_router = APIRouter(prefix="/api/v1")`,
-mounted via `app.include_router(api_v1_router)`. Only `/favicon.ico` stays on
-the root app. New endpoints go on the router, not on `app` directly.
+mounted via `app.include_router(api_v1_router)`. The root (`/`) and the API
+root (`/api/v1/`) redirect to the Swagger UI at `/docs`. Only `/favicon.ico`
+stays as a standalone root route. New endpoints go on the router, not on
+`app` directly.
 
 ### Hardware Metrics (api/hw/stats.py)
 
@@ -99,14 +100,26 @@ GPU detection is best-effort:
 
 ### JSONC Template Stubs
 
-API endpoints return static JSONC templates loaded by `api.lib.templates.load_template()`.
-Comments (`//`, `/* */`) are stripped via regex before `json.loads()`.
-Templates live in `templates/` and follow the naming convention `{method}-{name}.jsonc`.
+Power endpoints (DEBUG-gated) return static JSONC templates loaded by
+`api.lib.templates.load_template()`. Comments (`//`, `/* */`) are stripped via
+regex before `json.loads()`. Templates live in `templates/` and follow the
+naming convention `{method}-{name}.jsonc`.
+
+Computed endpoints (health, telemetry) do NOT use templates — they build the
+payload at request time.
 
 To add a new endpoint:
 1. Create a `templates/{method}-{name}.jsonc` file
 2. Add a route in `api/main.py` calling `load_template("{method}-{name}")`
 3. Add a docstring describing the endpoint
+
+### Health Endpoint (api/main.py)
+
+`GET /api/v1/health` is a dependency-free liveness probe: it returns
+`status`, `version` (from `api/__init__.py`), `uptime_seconds` (monotonic
+clock anchored at import), and `timestamp`, with `Cache-Control: no-store`.
+No hardware, DB, or external calls — the endpoint responding IS the liveness
+signal.
 
 ### Config Bootstrap
 

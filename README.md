@@ -44,13 +44,14 @@ nexus-API/
 
 ## API Endpoints
 
-All business routes live under the versioned `/api/v1` prefix. Only the
-favicon is served from the root.
+All business routes live under the versioned `/api/v1` prefix. The root
+(`/`) and the API root (`/api/v1/`) redirect to the Swagger UI at `/docs`.
 
 | Method | Path                        | Description                           | Backend           |
 |--------|------------------------------|---------------------------------------|-------------------|
-| GET    | `/api/v1/`                   | Root health-check                     | —                 |
-| GET    | `/api/v1/health`             | Health status                         | template stub     |
+| GET    | `/`                          | Redirect to Swagger UI (`/docs`)      | —                 |
+| GET    | `/api/v1/`                   | Redirect to Swagger UI (`/docs`)      | —                 |
+| GET    | `/api/v1/health`             | Liveness probe (version, uptime)      | computed live    |
 | POST   | `/api/v1/power/poweroff`     | Initiate system poweroff              | `api/hw/power.py` |
 | POST   | `/api/v1/power/sleep`        | Initiate system sleep                 | `api/hw/power.py` |
 | GET    | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
@@ -145,11 +146,10 @@ The server starts on `http://0.0.0.0:8000` (configurable via `PORT` in `.env`).
 Verify it's running:
 
 ```bash
-curl http://localhost:8000/api/v1/
-# {"msg":"Nexus API is running! (Nexus API)"}
+curl -i http://localhost:8000/        # 307 → /docs (Swagger UI)
 
 curl http://localhost:8000/api/v1/health
-# {"status":"up","healthy":true,"timestamp":1718800000}
+# {"status":"ok","version":"0.1.0","uptime_seconds":655,"timestamp":1718800000}
 
 curl http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}

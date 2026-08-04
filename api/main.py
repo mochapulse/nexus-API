@@ -1,18 +1,21 @@
 """Nexus API application entry point.
 
 A FastAPI server that serves health, telemetry, and power-management
-endpoints backed by JSONC response templates.  All business routes live
-under the versioned ``/api/v1`` prefix; only the favicon stays at the
-root.  Run with::
+endpoints.  Health and telemetry are computed live; power endpoints use
+JSONC response templates while DEBUG-gated.  All business routes live
+under the versioned ``/api/v1`` prefix; the root and the API root redirect
+to the Swagger UI at ``/docs``.  Run with::
 
     python -m api.main
 """
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 import psutil
+import time
 
+from api import __version__
 from api.config.paths import FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
 from api.hw.stats import get_system_metrics
@@ -25,8 +28,12 @@ import api.config.runtime as runtime
 # Warm up CPU timers
 psutil.cpu_percent(interval=None)
 
+# Process uptime anchor (per-worker, monotonic clock)
+_START_TIME = time.monotonic()
+
 app = FastAPI(
     title=runtime.APP_NAME,
+    version=__version__,
     debug=runtime.DEBUG,
 )
 
@@ -40,16 +47,29 @@ app.add_middleware(
 api_v1_router = APIRouter(prefix="/api/v1")
 
 
-@api_v1_router.get("/")
-def read_root():
-    """Root health-check — confirms the API is alive."""
-    return {"msg": f"Nexus API is running! ({runtime.APP_NAME})"}
+@api_v1_router.get("/", include_in_schema=False)
+def api_root():
+    """Redirect to the Swagger UI (``/docs``)."""
+    return RedirectResponse("/docs", status_code=307)
 
 
 @api_v1_router.get("/health")
-def get_health():
-    """Return the ``get-health`` JSONC template."""
-    return load_template("get-health")
+def get_health(response: Response):
+    """Liveness probe — confirms the process is alive and serving.
+
+    Dependency-free by design: no hardware, database, or external calls,
+    so a dependency blip can never cascade into a false "dead" verdict.
+    Returns 200 with the service version, process uptime, and timestamp.
+    The response is marked ``Cache-Control: no-store`` so load balancers
+    and proxies never serve a stale "ok".
+    """
+    response.headers["Cache-Control"] = "no-store"
+    return {
+        "status": "ok",
+        "version": __version__,
+        "uptime_seconds": int(time.monotonic() - _START_TIME),
+        "timestamp": int(time.time()),
+    }
 
 
 @api_v1_router.post("/power/poweroff")
@@ -99,6 +119,12 @@ async def get_telemetry():
 
 
 app.include_router(api_v1_router)
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Redirect to the Swagger UI (``/docs``)."""
+    return RedirectResponse("/docs", status_code=307)
 
 
 @app.get("/favicon.ico")
