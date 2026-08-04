@@ -39,24 +39,29 @@ pip install -r "$REQUIREMENTS_FILE"
 
 if ! $DEV_MODE; then
     RULE_FILE="/etc/polkit-1/rules.d/10-power-and-suspend.rules"
+    SERVICE_USER="${SUDO_USER:-$USER}"
 
-    echo "Creating Polkit rule at ${RULE_FILE}..."
+    echo "Creating Polkit rule at ${RULE_FILE} for user '${SERVICE_USER}'..."
 
-    sudo tee "$RULE_FILE" > /dev/null << 'EOF'
+    # Note: EOF is unquoted so ${SERVICE_USER} expands inside the heredoc
+    sudo tee "$RULE_FILE" > /dev/null << EOF
 polkit.addRule(function(action, subject) {
     if ((action.id == "org.freedesktop.login1.power-off" ||
          action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
+         action.id == "org.freedesktop.login1.set-wall-message" ||
          action.id == "org.freedesktop.login1.suspend" ||
          action.id == "org.freedesktop.login1.suspend-multiple-sessions") &&
-        subject.isInGroup("users")) {
+        (subject.user == "${SERVICE_USER}" || subject.isInGroup("users"))) {
         return polkit.Result.YES;
     }
 });
 EOF
 
     sudo chmod 644 "$RULE_FILE"
+    sudo systemctl restart polkit
 
-    echo "Polkit rule deployed successfully."
+    echo "Polkit rule deployed and polkit service restarted."
 fi
 
 if ! $DEV_MODE; then
