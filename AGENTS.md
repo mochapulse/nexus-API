@@ -42,9 +42,9 @@ frontend/
   vite.config.ts         Vite config (React plugin only, no proxy yet)
 templates/
   get-health.jsonc       Health check response stub
-  post-poweroff.jsonc    Poweroff confirmation stub
-  post-sleep.jsonc       Sleep confirmation stub
-  post-telemetry.jsonc   Telemetry data stub (CPU, RAM, GPU, uptime)
+  get-telemetry.jsonc    Telemetry data stub (CPU, RAM, GPU, uptime)
+  post-poweroff.jsonc    Poweroff triggered stub
+  post-sleep.jsonc       Sleep triggered stub
 .github/workflows/
   docs.yml               Sphinx build + GitHub Pages deploy
 ```
@@ -159,8 +159,10 @@ Single workflow `docs.yml`:
   degrades when `libamd_smi.so` is absent.
 - **Power management is wired and DEBUG-gated** (`/api/v1/power/poweroff`,
   `/api/v1/power/sleep`): `api/hw/power.py` wraps `systemctl poweroff/suspend`.
-  When `DEBUG=true`, both endpoints return stub templates instead of executing
-  the real commands — accidental shutdowns during development are impossible.
+  On success they return `{"poweroff_triggered": "true"}` /
+  `{"sleep_triggered": "true"}`. When `DEBUG=true`, both endpoints return stub
+  templates instead of executing the real commands — accidental shutdowns
+  during development are impossible.
   On systemctl failure the endpoints return HTTP 500 with the error detail.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API

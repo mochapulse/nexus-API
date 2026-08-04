@@ -11,8 +11,10 @@ and a React + TypeScript + Vite frontend.
 - **Telemetry** (`/api/v1/telemetry`): Returns live hardware metrics (CPU, RAM,
   swap, NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/stats.py`.
 - **Power management** (`/api/v1/power/poweroff`, `/api/v1/power/sleep`): Wired
-  to `api/hw/power.py` (`systemctl poweroff/suspend`). Gated by `DEBUG` — in dev
-  mode the endpoints return stub templates instead of executing real commands.
+  to `api/hw/power.py` (`systemctl poweroff/suspend`). On success they return
+  `{"poweroff_triggered": "true"}` / `{"sleep_triggered": "true"}`. Gated by
+  `DEBUG` — in dev mode the endpoints return stub templates instead of
+  executing real commands.
 - **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
   no API integration.
 - **Sentry**: SDK installed but not wired into the app.
@@ -51,7 +53,7 @@ favicon is served from the root.
 | GET    | `/api/v1/health`             | Health status                         | template stub     |
 | POST   | `/api/v1/power/poweroff`     | Initiate system poweroff              | `api/hw/power.py` |
 | POST   | `/api/v1/power/sleep`        | Initiate system sleep                 | `api/hw/power.py` |
-| POST   | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
+| GET    | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
 | GET    | `/favicon.ico`               | SVG favicon                           | static file       |
 
 Power endpoints are **DEBUG-gated**: when `DEBUG=true` in `.env` they return
@@ -149,7 +151,7 @@ curl http://localhost:8000/api/v1/
 curl http://localhost:8000/api/v1/health
 # {"status":"up","healthy":true,"timestamp":1718800000}
 
-curl -X POST http://localhost:8000/api/v1/telemetry
+curl http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}
 ```
 

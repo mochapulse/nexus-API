@@ -48,6 +48,7 @@ def get_health():
 def post_poweroff():
     """Power off the host system.
 
+    On success the response is ``{"poweroff_triggered": "true"}``.
     When ``DEBUG`` is enabled, the real command is skipped and a stub
     template is returned instead, so the machine cannot be shut down
     accidentally during development.
@@ -57,13 +58,14 @@ def post_poweroff():
     error = system_poweroff()
     if error:
         return JSONResponse(status_code=500, content={"status": "error", "detail": error})
-    return load_template("post-poweroff")
+    return {"poweroff_triggered": "true"}
 
 
 @api_v1_router.post("/power/sleep")
 def post_sleep():
     """Put the host system into S3 (suspend-to-RAM) sleep.
 
+    On success the response is ``{"sleep_triggered": "true"}``.
     When ``DEBUG`` is enabled, the real command is skipped and a stub
     template is returned instead, so the machine cannot be suspended
     accidentally during development.
@@ -73,11 +75,11 @@ def post_sleep():
     error = system_sleep()
     if error:
         return JSONResponse(status_code=500, content={"status": "error", "detail": error})
-    return load_template("post-sleep")
+    return {"sleep_triggered": "true"}
 
 
-@api_v1_router.post("/telemetry")
-async def post_telemetry():
+@api_v1_router.get("/telemetry")
+async def get_telemetry():
     """Return live hardware telemetry (CPU, RAM, swap, GPU).
 
     The payload is pre-serialized by orjson in the metrics worker and
