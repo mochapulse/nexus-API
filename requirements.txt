@@ -47,7 +47,6 @@ rich==15.0.0
 rich-toolkit==0.20.3
 rignore==0.8.0
 roman-numerals==4.1.0
-sentry-sdk==2.66.1
 shellingham==1.5.4
 snowballstemmer==3.1.1
 soupsieve==2.9.1
@@ -68,3 +67,4 @@ uvicorn==0.52.1
 uvloop==0.22.1
 watchfiles==1.2.0
 websockets==17.0.1
+pytest==9.1.1

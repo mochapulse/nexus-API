@@ -9,9 +9,10 @@ to the Swagger UI at ``/docs``.  Run with::
     python -m api.main
 """
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
+from fastapi.security import APIKeyHeader
 import psutil
 import time
 
@@ -44,7 +45,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-api_v1_router = APIRouter(prefix="/api/v1")
+_x_api_key = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(api_key: str | None = Depends(_x_api_key)) -> None:
+    """Reject requests without a valid ``X-API-Key`` header.
+
+    Applies to every route on the versioned router (all ``/api/v1``
+    endpoints).  The docs routes (``/docs``, ``/redoc``, ``/openapi.json``)
+    and the app-level helpers (``/``, ``/favicon.ico``) stay public.
+
+    When ``API_KEY`` is not configured the check fails closed in production
+    (HTTP 503) and passes silently in DEBUG, so development keeps working
+    out of the box.
+    """
+    if not runtime.API_KEY:
+        if runtime.DEBUG:
+            return
+        raise HTTPException(status_code=503, detail="API_KEY is not configured")
+    if api_key != runtime.API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key")
+
+
+api_v1_router = APIRouter(
+    prefix="/api/v1",
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @api_v1_router.get("/", include_in_schema=False)

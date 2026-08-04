@@ -59,6 +59,18 @@ python -m api.main                # start dev server (hot-reload in DEBUG mode)
 pip install -r requirements.txt   # sync dependencies
 ```
 
+### Tests
+
+```bash
+source venv/bin/activate
+python -m pytest          # run the full suite (from the repo root)
+python -m pytest -q      # quiet, summary only
+```
+
+Tests live in `api/test/` (auth matrix, health, telemetry, power-gating)
+with shared fixtures in the root `conftest.py`. The `systemctl` commands
+are always mocked — the suite can never power off or suspend the host.
+
 ### Frontend
 
 ```bash
@@ -104,6 +116,14 @@ root (`/api/v1/`) redirect to the Swagger UI at `/docs`. Only `/favicon.ico`
 stays as a standalone root route. New endpoints go on the router, not on
 `app` directly.
 
+### API-Key Auth (api/main.py)
+
+Every route on `api_v1_router` is protected by the `verify_api_key`
+dependency: the `X-API-Key` header must equal `runtime.API_KEY` (from
+`.env`). Docs routes (`/docs`, `/redoc`, `/openapi.json`) and app-level
+helpers (`/`, `/favicon.ico`) stay public. When `API_KEY` is unset the
+check fails closed in production (HTTP 503) and passes silently in DEBUG.
+
 ### Hardware Metrics (api/hw/stats.py)
 
 `get_system_metrics()` is an async function that offloads blocking C-driver calls
@@ -143,7 +163,8 @@ To add a new endpoint:
 for non-git deployments), `uptime_seconds` (monotonic clock anchored at
 import), and `timestamp`, with `Cache-Control: no-store`.
 No hardware, DB, or external calls — the endpoint responding IS the liveness
-signal.
+signal. Note: it sits behind the `X-API-Key` check like every `/api/v1`
+route, so monitoring probes must send the key.
 
 ### Config Bootstrap
 
@@ -165,7 +186,7 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 - Sphinx autodoc reads docstrings for API reference — keep them accurate
 - Frontend: strict TypeScript, ESLint flat config with `typescript-eslint`
 - Package manager: pnpm (no npm/yarn)
-- No tests written yet — test framework TBD
+- Tests: pytest via `python -m pytest` from the repo root
 - `.env` is gitignored; `.env.example` is committed
 
 ## Environment Variables
@@ -175,6 +196,7 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 | `APP_NAME` | `Nexus API` | App title for docs & root    |
 | `PORT`     | `8000`      | Server listen port           |
 | `DEBUG`    | `True`      | Hot-reload & verbose logging |
+| `API_KEY`  | *(empty)*   | Required for `X-API-Key` auth on `/api/v1` routes |
 
 ## CI/CD
 
@@ -186,7 +208,6 @@ Single workflow `docs.yml`:
 
 ## External Services
 
-- **Sentry**: error monitoring via `sentry-sdk` (configured in requirements, not yet wired in code)
 - **GitHub Pages**: hosts Sphinx documentation
 
 ## Implementation Status
@@ -204,7 +225,6 @@ Single workflow `docs.yml`:
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **Sentry SDK**: listed in `requirements.txt` but never imported or configured
-  in application code.
-- **No tests**: zero test coverage across both backend and frontend.
+- **Tests**: pytest suite in `api/test/` (26 tests: auth matrix, health,
+  telemetry shape, power DEBUG-gating). Frontend tests: none yet.
 - **No frontend-backend integration**: Vite config has no proxy to the API.

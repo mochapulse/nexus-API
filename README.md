@@ -17,8 +17,8 @@ and a React + TypeScript + Vite frontend.
   executing real commands.
 - **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
   no API integration.
-- **Sentry**: SDK installed but not wired into the app.
-- **Tests**: None written yet.
+- **Tests**: 26 pytest tests in `api/test/` (auth matrix, health, telemetry
+  shape, power DEBUG-gating).
 
 ## Architecture
 
@@ -108,6 +108,18 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+**Run the test suite** (from the repo root, venv active):
+
+```bash
+python -m pytest        # full suite
+python -m pytest -q     # summary only
+```
+
+The 26 tests in `api/test/` cover the auth matrix (X-API-Key), health
+payload, telemetry shape, and the DEBUG-gating of the power endpoints.
+`systemctl` is always mocked — the suite can never power off or suspend
+the host.
+
 **Environment configuration:**
 
 Copy the example env file if it doesn't already exist (the API does this
@@ -124,6 +136,13 @@ Edit `api/.env` to adjust settings:
 | `APP_NAME`| `Nexus API` | App title shown in docs & root   |
 | `PORT`    | `8000`      | Server listen port               |
 | `DEBUG`   | `True`      | Hot-reload, verbose logging      |
+| `API_KEY` | *(empty)*   | Shared secret for `X-API-Key` header; **required in production** |
+
+> **Authentication**: every `/api/v1` endpoint requires an `X-API-Key`
+> header matching `API_KEY`. The docs (`/docs`, `/redoc`, `/openapi.json`)
+> stay public. In DEBUG mode an unset key is allowed for convenience; in
+> production an unset key returns HTTP 503 — the server refuses to serve
+> unauthenticated.
 
 ### 3. Frontend
 
@@ -146,13 +165,16 @@ The server starts on `http://0.0.0.0:8000` (configurable via `PORT` in `.env`).
 Verify it's running:
 
 ```bash
-curl -i http://localhost:8000/        # 307 → /docs (Swagger UI)
+curl -i http://localhost:8000/        # 307 → /docs (Swagger UI) — public
 
-curl http://localhost:8000/api/v1/health
+# All /api/v1 endpoints need the key from api/.env:
+curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/health
 # {"status":"ok","version":"0.1.0","uptime_seconds":655,"timestamp":1718800000}
 
-curl http://localhost:8000/api/v1/telemetry
+curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}
+
+curl -i http://localhost:8000/api/v1/health    # no key → 401 Unauthorized
 ```
 
 ### Systemd service (production)
@@ -268,4 +290,3 @@ Docs are automatically built and deployed to GitHub Pages on every push to
 | Linting  | ESLint, typescript-eslint        |
 | Package  | pnpm                             |
 | CI/CD    | GitHub Actions                   |
-| Errors   | Sentry SDK                       |
