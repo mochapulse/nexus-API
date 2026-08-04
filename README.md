@@ -188,6 +188,50 @@ pnpm build
 
 Output goes to `frontend/dist/`.
 
+## Releases
+
+Releases are **git tags**. The API version is derived automatically at
+startup from the nearest `v*` tag reachable from HEAD
+(`git describe --tags --abbrev=0 --dirty --match v*`), so bumping the
+version is a one-step tag operation — no file edits, no commits.
+
+### Versioning rules (SemVer)
+
+| Bump   | When                                   | Example       |
+|--------|----------------------------------------|---------------|
+| MAJOR  | Breaking change (renamed routes, removed fields) | `v1.0.0` |
+| MINOR  | New feature (new endpoint, new fields) | `v0.2.0` |
+| PATCH  | Bugfix                                 | `v0.1.1` |
+
+### Release steps
+
+```bash
+# 1. Everything committed and pushed on main
+git status                  # clean tree
+git push origin main
+
+# 2. Tag the current HEAD with the next version
+git tag v0.1.1
+
+# 3. Publish the tag
+git push origin v0.1.1
+
+# 4. Verify — the running API now reports the new version
+curl http://localhost:8000/api/v1/health
+# {"status":"ok","version":"0.1.1","uptime_seconds":42,"timestamp":...}
+```
+
+### How the version behaves
+
+- **Git checkout deployment**: version = last tag reachable from HEAD
+  (e.g. `0.1.1`), plus a `-dirty` suffix when the working tree has
+  uncommitted changes (`0.1.1-dirty`).
+- **Non-git deployment** (tarball, copied files): no tag lookup possible,
+  the fallback constant `_FALLBACK_VERSION` in `api/__init__.py` is used.
+  Bump it manually there, or deploy a git checkout.
+- The version surfaces in `GET /api/v1/health` and in the OpenAPI/Swagger
+  UI at `/docs`.
+
 ## Documentation
 
 Sphinx docs live in `docs/` and use the Furo theme with autodoc from source.

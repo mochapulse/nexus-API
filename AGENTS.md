@@ -77,6 +77,22 @@ sphinx-build -b html docs/ docs/_build/html    # build
 sphinx-build -b html docs/ docs/_build/html -W # build (warnings as errors, same as CI)
 ```
 
+### Releases
+
+Releases are git tags; the version is never edited by hand. At import time
+`api/__init__.py` runs `git describe --tags --abbrev=0 --dirty --match v*`
+against the project root: the nearest `v*` tag reachable from HEAD becomes
+`__version__` (with `-dirty` appended when the tree is dirty). If git is
+unavailable (tarball deployment), `_FALLBACK_VERSION` is used instead.
+
+```bash
+git tag v0.1.1 && git push origin v0.1.1
+```
+
+SemVer: MAJOR = breaking, MINOR = feature, PATCH = bugfix. The version
+surfaces in `/api/v1/health` and OpenAPI at `/docs`. Full tutorial in
+README.md → Releases.
+
 ## Architecture Patterns
 
 ### Versioned Routing (api/main.py)
@@ -116,8 +132,10 @@ To add a new endpoint:
 ### Health Endpoint (api/main.py)
 
 `GET /api/v1/health` is a dependency-free liveness probe: it returns
-`status`, `version` (from `api/__init__.py`), `uptime_seconds` (monotonic
-clock anchored at import), and `timestamp`, with `Cache-Control: no-store`.
+`status`, `version` (derived from the nearest git `v*` tag via
+`git describe`, with a `_FALLBACK_VERSION` constant in `api/__init__.py`
+for non-git deployments), `uptime_seconds` (monotonic clock anchored at
+import), and `timestamp`, with `Cache-Control: no-store`.
 No hardware, DB, or external calls — the endpoint responding IS the liveness
 signal.
 
