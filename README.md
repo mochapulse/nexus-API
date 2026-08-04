@@ -192,6 +192,46 @@ journalctl -u nexus-api -f      # tail logs
 sudo systemctl stop nexus-api   # stop the service
 ```
 
+### Update the server deployment
+
+The production server runs the API straight from a git checkout, so an
+update is: pull the code **and the tags**, then restart the service.
+
+```bash
+# 1. Pull the new release (code + tags)
+cd ~/nexus-API
+git pull origin main
+git fetch --tags
+
+# 2. Install any new dependencies (when requirements.txt changed)
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Restart — the version is read at startup, so a restart is required
+sudo systemctl restart nexus-api
+```
+
+> **Why `fetch --tags`?** The API version is derived from the nearest git
+> tag (`git describe`). If the server never receives the new tag it keeps
+> reporting the previous version even though the code is new — the release
+> tag and the code must arrive together.
+
+**Verify the update:**
+
+```bash
+systemctl status nexus-api                        # active (running)
+
+# Health must report the new version (port from api/.env on the server)
+curl -H "X-API-Key: <API_KEY>" http://localhost:47102/api/v1/health
+# {"status":"ok","version":"0.2.0", ...}
+
+journalctl -u nexus-api -n 20                      # startup log has no errors
+```
+
+If the version does not match the tag you just pushed, re-check that the
+tags arrived (`git tag -l 'v*'` on the server) and that the service was
+restarted after the pull.
+
 ### Start the frontend dev server
 
 ```bash

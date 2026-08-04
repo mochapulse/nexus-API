@@ -106,6 +106,23 @@ SemVer: MAJOR = breaking, MINOR = feature, PATCH = bugfix. The version
 surfaces in `/api/v1/health` and OpenAPI at `/docs`. Full tutorial in
 README.md → Releases.
 
+### Updating the server deployment
+
+The server runs from a git checkout (`~/nexus-API` on the machine, per
+`cmd/install.sh`). Update = pull code AND tags, restart:
+
+```bash
+cd ~/nexus-API
+git pull origin main
+git fetch --tags          # tags drive the version — they must arrive with the code
+source venv/bin/activate && pip install -r requirements.txt   # when deps changed
+sudo systemctl restart nexus-api                              # version is read at import time
+```
+
+Verify with `systemctl status nexus-api` and `GET /api/v1/health`
+(`X-API-Key` header) — the reported version must match the release tag.
+A stale version usually means: tags not fetched or service not restarted.
+
 ## Architecture Patterns
 
 ### Versioned Routing (api/main.py)
