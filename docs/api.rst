@@ -35,3 +35,18 @@ API Reference
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: api.hw
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.hw.stats
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.hw.power
+   :members:
+   :undoc-members:
+   :show-inheritance:

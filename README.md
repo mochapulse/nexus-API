@@ -6,16 +6,16 @@ and a React + TypeScript + Vite frontend.
 
 ## Current State
 
-> **Work in progress — both frontend and backend logic are placeholder stubs.**
+> **Real telemetry is live — power management and frontend are in progress.**
 
-- **Frontend**: The React app (`App.tsx`) is a completely empty component — no
-  UI, no dashboard, no API integration. Only the project scaffold is in place
-  (Vite + React + TypeScript + ESLint).
-- **API templates**: All endpoint responses return hardcoded JSON stubs from
-  `templates/`. Endpoints like `/telemetry`, `/power/poweroff`, and
-  `/power/sleep` return static placeholder data — they do NOT actually collect
-  telemetry, sniff systemd logs, or control power states.
-- **Sentry**: SDK is installed but not wired into the app.
+- **Telemetry** (`/telemetry`): Returns live hardware metrics (CPU, RAM, swap,
+  NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/stats.py`.
+- **Power management** (`/power/poweroff`, `/power/sleep`): Logic exists in
+  `api/hw/power.py` (calls `systemctl poweroff/suspend`) but the endpoints
+  still return JSONC template stubs — not yet wired to the real functions.
+- **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
+  no API integration.
+- **Sentry**: SDK installed but not wired into the app.
 - **Tests**: None written yet.
 
 ## Architecture
@@ -25,8 +25,13 @@ nexus-API/
 ├── api/                 # FastAPI backend
 │   ├── main.py          # App entrypoint, route definitions
 │   ├── config/          # Runtime settings (dotenv) & paths
+│   ├── hw/              # Hardware interfaces (telemetry, power)
+│   │   ├── stats.py     # psutil + NVML + AMD SMI metrics collector
+│   │   └── power.py     # systemctl poweroff / suspend wrappers
 │   └── lib/             # Helpers (JSONC template loader)
-├── frontend/            # React 19 + TypeScript 6 + Vite 8
+├── daemon/              # Systemd unit for production deployment
+│   └── nexus-api.service
+├── frontend/            # React 19 + TypeScript + Vite
 │   ├── src/             # App components & styles
 │   └── public/          # Static assets (favicon.svg)
 ├── templates/           # JSONC response stubs for API endpoints
@@ -37,22 +42,21 @@ nexus-API/
 
 ## API Endpoints
 
-| Method | Path               | Description                  | Template              |
-|--------|---------------------|------------------------------|------------------------|
-| GET    | `/`                 | Root health-check            | —                      |
-| GET    | `/health`           | Health status                | `get-health.jsonc`     |
-| POST   | `/power/poweroff`   | Initiate system poweroff     | `post-poweroff.jsonc`  |
-| POST   | `/power/sleep`      | Initiate system sleep        | `post-sleep.jsonc`     |
-| POST   | `/telemetry`        | Collect system telemetry     | `post-telemetry.jsonc` |
-
-All JSON responses are driven by templates in `templates/`. Templates use JSONC
-(JSON with comments); comments are stripped at load time.
+| Method | Path               | Description                           | Backend           |
+|--------|---------------------|---------------------------------------|-------------------|
+| GET    | `/`                 | Root health-check                     | —                 |
+| GET    | `/health`           | Health status                         | template stub     |
+| POST   | `/power/poweroff`   | Initiate system poweroff              | template stub     |
+| POST   | `/power/sleep`      | Initiate system sleep                 | template stub     |
+| POST   | `/telemetry`        | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
 
 ## Prerequisites
 
 - **Python 3.12+** with pip
 - **Node.js 22+** + pnpm (for frontend)
 - Linux system with systemd (for full telemetry/power features)
+- For NVIDIA GPU metrics: NVIDIA drivers with NVML support
+- For AMD GPU metrics: ROCm stack with `amdsmi` (`libamd_smi.so`)
 
 ## Installation
 
@@ -65,17 +69,26 @@ cd nexus-API
 
 ### 2. Backend (Python API)
 
-**Option A — automated install script:**
+**Option A — production install (with systemd service):**
 
 ```bash
 chmod +x cmd/install.sh
 ./cmd/install.sh
 ```
 
-This installs system packages (`python3-full`, build tools), creates a virtual
-environment in `venv/`, and installs all Python dependencies.
+This installs system packages, creates a virtual environment, deploys the
+polkit rule for passwordless power/sleep, and enables the systemd service.
 
-**Option B — manual:**
+**Option B — development install (skip system artifacts):**
+
+```bash
+./cmd/install.sh -dev
+```
+
+Installs packages, venv, and pip dependencies only. Does NOT deploy polkit
+rules or systemd service — ideal for local development.
+
+**Option C — manual:**
 
 ```bash
 python3 -m venv venv
@@ -127,6 +140,24 @@ curl http://localhost:8000/
 
 curl http://localhost:8000/health
 # {"status":"up","healthy":true,"timestamp":1718800000}
+
+curl -X POST http://localhost:8000/telemetry
+# {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}
+```
+
+### Systemd service (production)
+
+After running `./cmd/install.sh`, the `nexus-api` service is enabled for
+autostart. To start it immediately:
+
+```bash
+sudo systemctl start nexus-api
+```
+
+```bash
+systemctl status nexus-api      # check service health
+journalctl -u nexus-api -f      # tail logs
+sudo systemctl stop nexus-api   # stop the service
 ```
 
 ### Start the frontend dev server
@@ -175,11 +206,12 @@ Docs are automatically built and deployed to GitHub Pages on every push to
 
 | Layer    | Technology                       |
 |----------|----------------------------------|
-| Backend  | FastAPI 0.141, Uvicorn 0.52     |
-| Config   | python-dotenv, pydantic-settings |
-| Docs     | Sphinx 9, Furo theme, autodoc    |
-| Frontend | React 19, TypeScript 6, Vite 8  |
-| Linting  | ESLint 10, typescript-eslint     |
+| Backend  | FastAPI, Uvicorn                 |
+| Config   | python-dotenv                    |
+| HW       | psutil, pynvml, amdsmi (optional)|
+| Docs     | Sphinx, Furo theme, autodoc      |
+| Frontend | React 19, TypeScript, Vite       |
+| Linting  | ESLint, typescript-eslint        |
 | Package  | pnpm                             |
 | CI/CD    | GitHub Actions                   |
 | Errors   | Sentry SDK                       |

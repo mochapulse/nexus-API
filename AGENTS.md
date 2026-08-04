@@ -20,10 +20,16 @@ api/                    FastAPI backend
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
     runtime.py           APP_NAME, PORT, DEBUG from dotenv
+  hw/
+    stats.py             Real hardware metrics: psutil + NVML + AMD SMI
+    power.py             systemctl poweroff / suspend wrappers
   lib/
     templates.py         load_template(name) — reads JSONC, strips comments, returns dict
 cmd/
-  install.sh             Bootstrap script (apt deps → venv → pip install)
+  install.sh             Bootstrap script: packages → venv → pip → polkit → systemd
+                         Use -dev flag to skip polkit and systemd installation
+daemon/
+  nexus-api.service      Systemd unit with hardening (ProtectSystem, PrivateTmp, etc.)
 docs/
   conf.py                Sphinx config (autodoc, napoleon, intersphinx, furo)
   index.rst              TOC tree entrypoint
@@ -73,6 +79,17 @@ sphinx-build -b html docs/ docs/_build/html -W # build (warnings as errors, same
 ```
 
 ## Architecture Patterns
+
+### Hardware Metrics (api/hw/stats.py)
+
+`get_system_metrics()` is an async function that offloads blocking C-driver calls
+(NVML, AMD SMI, psutil) to a worker thread via `asyncio.to_thread()`. Returns
+orjson-encoded bytes that can be decoded to str or returned raw.
+
+GPU detection is best-effort:
+- **NVIDIA**: `pynvml` — caught silently on `NVMLError`
+- **AMD**: `amdsmi` — import-time init/shutdown test validates the native lib;
+  caught on any `Exception` since the import may succeed but the .so may fail
 
 ### JSONC Template Stubs
 
@@ -131,15 +148,14 @@ Single workflow `docs.yml`:
 
 ## Implementation Status
 
-**Nothing is implemented yet — all code is placeholder scaffolding.**
-
+- **Telemetry is live** (`/telemetry`): `api/hw/stats.py` returns real CPU, RAM,
+  swap, and GPU metrics via psutil, NVML, and AMD SMI. AMD SMI gracefully degrades
+  when `libamd_smi.so` is absent.
+- **Power management** (`/power/poweroff`, `/power/sleep`): Logic exists in
+  `api/hw/power.py` (systemctl wrappers) but endpoints still return template stubs.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **API templates are hardcoded stubs**: every endpoint (`/health`,
-  `/telemetry`, `/power/poweroff`, `/power/sleep`) returns static JSON loaded
-  from `templates/`. No real telemetry collection, no systemd log sniffing, no
-  actual power management logic exists.
 - **Sentry SDK**: listed in `requirements.txt` but never imported or configured
   in application code.
 - **No tests**: zero test coverage across both backend and frontend.

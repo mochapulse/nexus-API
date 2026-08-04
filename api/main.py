@@ -8,13 +8,19 @@ endpoints backed by JSONC response templates.  Run with::
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+import psutil
 
 from api.config.paths import DOTENV_PATH, FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
+from api.hw.stats import get_system_metrics
+from api.hw.power import system_poweroff
 
 ensure_dotenv()
 
 import api.config.runtime as runtime
+
+# Warm up CPU timers
+psutil.cpu_percent(interval=None)
 
 app = FastAPI(
     title=runtime.APP_NAME,
@@ -43,7 +49,13 @@ def get_health():
 @app.post("/power/poweroff")
 def post_poweroff():
     """Return the ``post-poweroff`` JSONC template."""
-    return load_template("post-poweroff")
+    if runtime.DEBUG:
+        print("Dummy POST /power/poweroff")
+        return load_template("post-poweroff")
+    else:
+        
+        system_poweroff()
+        return load_template("post-poweroff")
 
 
 @app.post("/power/sleep")
@@ -53,9 +65,9 @@ def post_sleep():
 
 
 @app.post("/telemetry")
-def post_telemetry():
-    """Return the ``post-telemetry`` JSONC template."""
-    return load_template("post-telemetry")
+async def post_telemetry():
+
+    return await get_system_metrics(pretty=True)
 
 
 if __name__ == "__main__":

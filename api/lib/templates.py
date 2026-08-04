@@ -10,7 +10,7 @@ load_template(name)
     Read and parse a JSONC template file, returning its contents as a dict.
 """
 
-import json
+import orjson
 import re
 
 from api.config.paths import TEMPLATES_DIR
@@ -39,4 +39,4 @@ def load_template(name: str) -> dict:
     filepath = TEMPLATES_DIR / f"{name}.jsonc"
     raw = filepath.read_text(encoding="utf-8")
     clean = _STRIP_COMMENTS.sub("", raw)
-    return json.loads(clean)
+    return orjson.loads(clean)

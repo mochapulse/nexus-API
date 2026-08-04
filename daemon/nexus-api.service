@@ -1,0 +1,32 @@
+[Unit]
+Description=Nexus API
+Documentation=https://github.com/mochapulse/nexus-API
+After=network.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__USER__
+WorkingDirectory=__PROJECT_ROOT__
+ExecStart=__PROJECT_ROOT__/venv/bin/python -m api.main
+
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexus-api
+
+Environment=PYTHONUNBUFFERED=1
+
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+ReadWritePaths=/var/log
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
