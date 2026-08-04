@@ -1,0 +1,14 @@
+// REAL RESPONSE EXAMPLE — GET /api/v1/health (documentation only, NOT loaded by load_template())
+// The health payload is computed live at request time; this file exists so the
+// templates/ directory mirrors the full API surface as a tutorial.
+// HTTP 200 with Cache-Control: no-store.
+//   - version          : nearest git v* tag (git describe), "-dirty" when tree is dirty;
+//                        falls back to _FALLBACK_VERSION outside a git checkout
+//   - uptime_seconds   : process uptime (monotonic clock anchored at import)
+//   - timestamp        : unix epoch seconds
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "uptime_seconds": 42,
+  "timestamp": 1785869138
+}

@@ -1,28 +1,50 @@
+// REAL RESPONSE EXAMPLE — GET /api/v1/telemetry (computed live, not served from this file)
+// Captured from the dev machine on 2026-08-04. Values change on every request.
+// Variability notes:
+//   - uptime_seconds        : host boot uptime (time.time() - psutil.boot_time())
+//   - cpu.per_core_percent  : one entry per logical CPU core (length = core count)
+//   - gpu                   : one entry per GPU; NVIDIA and AMD can coexist;
+//                             empty array [] when no supported GPU is present
+//   - gpu[].vendor          : "NVIDIA" (pynvml) or "AMD" (amdsmi)
 {
-  "uptime_seconds": 345600,
+  "uptime_seconds": 20613,
   "cpu": {
-    "overall_usage_percent": 12.5,
-    "per_core_percent": [15.2, 8.0, 22.1, 4.5]
+    "overall_usage_percent": 0.0,
+    "per_core_percent": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
   },
   "ram": {
-    "total_bytes": 33685815296,
-    "used_bytes": 8589934592,
-    "free_bytes": 25095880704,
-    "usage_percent": 25.5
+    "total_bytes": 8154390528,
+    "used_bytes": 3744198656,
+    "free_bytes": 2368282624,
+    "usage_percent": 45.9
   },
   "swap": {
-    "total_bytes": 8589934592,
+    "total_bytes": 2147483648,
     "used_bytes": 0,
     "usage_percent": 0.0
   },
   "gpu": [
     {
       "index": 0,
-      "name": "NVIDIA GeForce RTX 4090",
-      "gpu_usage_percent": 45,
-      "vram_used_bytes": 4294967296,
-      "vram_total_bytes": 25769803776,
-      "temperature_c": 58
+      "vendor": "NVIDIA",
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "gpu_usage_percent": 22,
+      "vram_used_bytes": 1080946688,
+      "vram_total_bytes": 4294967296,
+      "temperature_c": 39
     }
   ]
 }

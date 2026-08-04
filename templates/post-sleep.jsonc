@@ -1,3 +1,7 @@
+// REAL RESPONSE EXAMPLE — POST /api/v1/power/sleep
+// DEBUG=true  : this exact payload is returned (stub, nothing is executed).
+// Production  : same payload after `systemctl suspend` succeeds.
+// On systemctl failure: HTTP 500 {"status":"error","detail":"<error>"}
 {
   "sleep_triggered": "true"
 }

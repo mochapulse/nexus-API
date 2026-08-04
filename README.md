@@ -36,7 +36,7 @@ nexus-API/
 ├── frontend/            # React 19 + TypeScript + Vite
 │   ├── src/             # App components & styles
 │   └── public/          # Static assets (favicon.svg)
-├── templates/           # JSONC response stubs for API endpoints
+├── templates/           # Real API response examples (JSONC, tutorial for agents)
 ├── docs/                # Sphinx documentation (autodoc + Furo theme)
 ├── cmd/                 # Shell scripts (install.sh)
 └── .github/workflows/   # CI/CD (Sphinx docs → GitHub Pages)

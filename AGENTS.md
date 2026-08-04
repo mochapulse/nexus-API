@@ -41,6 +41,7 @@ frontend/
   public/favicon.svg     Shared favicon (served by API and frontend)
   vite.config.ts         Vite config (React plugin only, no proxy yet)
 templates/
+  get-health.jsonc       Health response example (docs only, computed live)
   get-telemetry.jsonc    Telemetry data stub (CPU, RAM, GPU, uptime)
   post-poweroff.jsonc    Poweroff triggered stub
   post-sleep.jsonc       Sleep triggered stub
@@ -120,6 +121,11 @@ Power endpoints (DEBUG-gated) return static JSONC templates loaded by
 `api.lib.templates.load_template()`. Comments (`//`, `/* */`) are stripped via
 regex before `json.loads()`. Templates live in `templates/` and follow the
 naming convention `{method}-{name}.jsonc`.
+
+Templates double as a tutorial: every file mirrors a REAL captured API
+response, and `templates/get-health.jsonc` documents the computed live health
+payload (it is NOT loaded by `load_template()`). Keep them in sync when
+response shapes change.
 
 Computed endpoints (health, telemetry) do NOT use templates — they build the
 payload at request time.
