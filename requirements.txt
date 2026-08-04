@@ -42,3 +42,12 @@ uvicorn==0.52.1
 uvloop==0.22.1
 watchfiles==1.2.0
 websockets==17.0.1
+furo==2025.12.19
+Sphinx==9.1.0
+sphinx-basic-ng==1.0.0b2
+sphinxcontrib-applehelp==2.0.0
+sphinxcontrib-devhelp==2.0.0
+sphinxcontrib-htmlhelp==2.1.0
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==2.0.0
+sphinxcontrib-serializinghtml==2.0.0

@@ -1,0 +1,1 @@
+"""Nexus API — FastAPI backend serving health, telemetry, and power management endpoints."""

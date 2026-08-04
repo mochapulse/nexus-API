@@ -222,3 +222,7 @@ __marimo__/
 # Frontend
 **/dist/
 **/node_modules/
+
+
+# AI
+**/.atl/

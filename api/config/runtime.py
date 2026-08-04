@@ -1,3 +1,14 @@
+"""Runtime configuration loaded from environment variables (``python-dotenv``).
+
+Attributes
+----------
+APP_NAME : str
+    Application name, default ``"Nexus API"``.
+PORT : int
+    Server listen port, default ``8000``.
+DEBUG : bool
+    Toggle debug mode (hot-reload, verbose logs), default ``True``.
+"""
 
 import os
 

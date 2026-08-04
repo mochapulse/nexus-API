@@ -1,0 +1,1 @@
+"""Configuration package — runtime settings, paths, and environment bootstrapping."""

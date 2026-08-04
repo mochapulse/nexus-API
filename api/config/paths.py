@@ -1,3 +1,23 @@
+"""Filesystem paths and bootstrapping for the Nexus API.
+
+Constants
+---------
+API_DIR : pathlib.Path
+    Absolute path to the ``api/`` package directory.
+PROJECT_DIR : pathlib.Path
+    Absolute path to the repository root (one level above ``api/``).
+DOTENV_PATH : pathlib.Path
+    Path to ``api/.env``.
+FAVICON_PATH : pathlib.Path
+    Path to the favicon SVG served by the FastAPI app.
+TEMPLATES_DIR : pathlib.Path
+    Path to the ``templates/`` directory containing JSONC response templates.
+
+Functions
+---------
+ensure_dotenv(base_dir=API_DIR)
+    Copy ``.env.example`` to ``.env`` if the latter does not exist.
+"""
 
 from pathlib import Path
 import shutil
@@ -7,11 +27,15 @@ PROJECT_DIR = API_DIR.parent
 
 DOTENV_PATH = API_DIR / ".env"
 FAVICON_PATH = PROJECT_DIR / "frontend" / "public" / "favicon.svg"
+TEMPLATES_DIR = PROJECT_DIR / "templates"
 
 def ensure_dotenv(base_dir: Path = API_DIR) -> None:
-    """
-    Ensures a .env file exists in the specified directory by copying
-    .env.example if .env is missing.
+    """Copy ``.env.example`` to ``.env`` when no ``.env`` is present.
+
+    Parameters
+    ----------
+    base_dir : pathlib.Path
+        Directory containing the ``.env`` and ``.env.example`` files.
     """
     dotenv_path = base_dir / ".env"
     example_dotenv_path = base_dir / ".env.example"
