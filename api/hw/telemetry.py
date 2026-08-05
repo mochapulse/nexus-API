@@ -40,7 +40,8 @@ def _lspci_amd_names() -> dict[str, str]:
             if "AMD" not in line:
                 continue
             # Line format: "01:00.0 VGA compatible controller: AMD ..."
-            slot = line.split(":")[0].strip()
+            # Slot is the first token (before the space)
+            slot = line.split()[0]
             # Extract name after the last bracketed info, e.g. "[Radeon RX 580 2048SP]"
             if "[" in line and "]" in line:
                 bracket = line[line.rfind("[") + 1 : line.rfind("]")]
