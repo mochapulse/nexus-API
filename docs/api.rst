@@ -50,3 +50,13 @@ API Reference
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: api.db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.db.db
+   :members:
+   :undoc-members:
+   :show-inheritance:

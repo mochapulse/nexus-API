@@ -1,13 +1,19 @@
 // REAL RESPONSE EXAMPLE — GET /api/v1/telemetry (computed live, not served from this file)
-// Captured from the dev machine on 2026-08-04. Values change on every request.
+// Captured from the dev machine on 2026-08-05. Values change on every request.
 // Variability notes:
 //   - uptime_seconds        : host boot uptime (time.time() - psutil.boot_time())
 //   - cpu.per_core_percent  : one entry per logical CPU core (length = core count)
 //   - gpu                   : one entry per GPU; NVIDIA and AMD can coexist;
 //                             empty array [] when no supported GPU is present
 //   - gpu[].vendor          : "NVIDIA" (pynvml) or "AMD" (amdsmi)
+//   - power_sensors         : one entry per hwmon device with available sensors;
+//                             reads voltage (V), current (A), power (W), temperature (°C)
+//                             from /sys/class/hwmon; empty array [] when no sensors found
+//   - power_supply          : one entry per battery from /sys/class/power_supply;
+//                             provides battery-specific metrics (voltage, energy, capacity,
+//                             status, cycle count, manufacturer); empty array [] when no batteries
 {
-  "uptime_seconds": 20613,
+  "uptime_seconds": 1996,
   "cpu": {
     "overall_usage_percent": 0.0,
     "per_core_percent": [
@@ -26,10 +32,10 @@
     ]
   },
   "ram": {
-    "total_bytes": 8154390528,
-    "used_bytes": 3744198656,
-    "free_bytes": 2368282624,
-    "usage_percent": 45.9
+    "total_bytes": 8154394624,
+    "used_bytes": 3581427712,
+    "free_bytes": 1224105984,
+    "usage_percent": 43.9
   },
   "swap": {
     "total_bytes": 2147483648,
@@ -41,10 +47,35 @@
       "index": 0,
       "vendor": "NVIDIA",
       "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
-      "gpu_usage_percent": 22,
-      "vram_used_bytes": 1080946688,
+      "gpu_usage_percent": 43,
+      "vram_used_bytes": 921669632,
       "vram_total_bytes": 4294967296,
-      "temperature_c": 39
+      "temperature_c": 43
+    }
+  ],
+  "power_sensors": [
+    {
+      "device": "BAT1",
+      "voltage_v": 5.0,
+      "power_w": 0.0
+    }
+  ],
+  "power_supply": [
+    {
+      "device": "BAT1",
+      "type": "Battery",
+      "voltage_v": 5.0,
+      "voltage_min_design_v": 5.0,
+      "power_w": 0.0,
+      "energy_now_wh": 5.0,
+      "energy_full_wh": 5.0,
+      "energy_full_design_wh": 5.0,
+      "capacity_percent": 100,
+      "cycle_count": -1,
+      "alarm_wh": 0.0,
+      "status": "Full",
+      "model_name": "Microsoft Hyper-V Virtual Battery",
+      "technology": "Unknown"
     }
   ]
 }

@@ -12,6 +12,8 @@ FAVICON_PATH : pathlib.Path
     Path to the favicon SVG served by the FastAPI app.
 TEMPLATES_DIR : pathlib.Path
     Path to the ``templates/`` directory containing JSONC response templates.
+DB_PATH : pathlib.Path
+    Path to the SQLite3 database file used by the Nexus API.
 
 Functions
 ---------
@@ -28,6 +30,7 @@ PROJECT_DIR = API_DIR.parent
 DOTENV_PATH = API_DIR / ".env"
 FAVICON_PATH = PROJECT_DIR / "frontend" / "public" / "favicon.svg"
 TEMPLATES_DIR = PROJECT_DIR / "templates"
+DB_PATH = API_DIR / "db"/ "nexus_api.db"
 
 def ensure_dotenv(base_dir: Path = API_DIR) -> None:
     """Copy ``.env.example`` to ``.env`` when no ``.env`` is present.
