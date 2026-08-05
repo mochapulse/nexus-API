@@ -23,6 +23,55 @@ except Exception:
     AMD_SMI_AVAILABLE = False
 
 
+def _lspci_amd_names() -> dict[str, str]:
+    """Parse lspci output to map PCI slot names to AMD GPU descriptions.
+
+    Returns:
+        Dict mapping PCI slot (e.g. '0000:01:00.0') to the GPU name string.
+    """
+    import subprocess
+
+    names: dict[str, str] = {}
+    try:
+        result = subprocess.run(
+            ["lspci"], capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            if "AMD" not in line:
+                continue
+            # Line format: "01:00.0 VGA compatible controller: AMD ..."
+            slot = line.split(":")[0].strip()
+            # Extract name after the last bracketed info, e.g. "[Radeon RX 580 2048SP]"
+            if "[" in line and "]" in line:
+                bracket = line[line.rfind("[") + 1 : line.rfind("]")]
+                names[slot] = bracket
+            else:
+                # Fallback: text after the colon-dash separator
+                parts = line.split(": ", 1)
+                if len(parts) == 2:
+                    names[slot] = parts[1].strip()
+    except (subprocess.SubprocessError, OSError):
+        pass
+    return names
+
+
+def _resolve_amd_slot(device_path: Path) -> str | None:
+    """Resolve a sysfs device path to its PCI slot name.
+
+    Reads the symlink target of /sys/class/drm/cardN/device to extract
+    the PCI slot (e.g. 0000:01:00.0).
+    """
+    try:
+        resolved = device_path.resolve()
+        # Path ends with 0000:01:00.0 — take the last component
+        slot = resolved.name
+        if ":" in slot:
+            return slot
+    except OSError:
+        pass
+    return None
+
+
 def _read_amd_gpu_sysfs() -> list[dict]:
     """Read AMD GPU metrics from sysfs (amdgpu driver).
 
@@ -34,6 +83,7 @@ def _read_amd_gpu_sysfs() -> list[dict]:
     """
     gpus = []
     drm_cards = sorted(glob.glob("/sys/class/drm/card[0-9]*"))
+    lspci_names = _lspci_amd_names()
 
     for card_path in drm_cards:
         device_path = Path(card_path) / "device"
@@ -53,17 +103,20 @@ def _read_amd_gpu_sysfs() -> list[dict]:
 
         gpu: dict = {"vendor": "AMD", "index": len(gpus)}
 
-        # GPU name from boot_vga or modalias
-        name_file = device_path / "product_name"
-        if name_file.exists():
-            try:
-                gpu["name"] = name_file.read_text().strip() or "AMD GPU"
-            except OSError:
-                gpu["name"] = "AMD GPU"
+        # GPU name: lspci first, then product_name, then card fallback
+        slot = _resolve_amd_slot(device_path)
+        if slot and slot in lspci_names:
+            gpu["name"] = lspci_names[slot]
         else:
-            # Fallback: derive from card directory name
-            card_name = Path(card_path).name
-            gpu["name"] = f"AMD GPU ({card_name})"
+            name_file = device_path / "product_name"
+            if name_file.exists():
+                try:
+                    gpu["name"] = name_file.read_text().strip() or "AMD GPU"
+                except OSError:
+                    gpu["name"] = "AMD GPU"
+            else:
+                card_name = Path(card_path).name
+                gpu["name"] = f"AMD GPU ({card_name})"
 
         # VRAM total
         vram_total_file = device_path / "mem_info_vram_total"
