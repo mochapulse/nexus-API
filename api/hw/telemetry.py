@@ -23,6 +23,93 @@ except Exception:
     AMD_SMI_AVAILABLE = False
 
 
+def _read_amd_gpu_sysfs() -> list[dict]:
+    """Read AMD GPU metrics from sysfs (amdgpu driver).
+
+    Fallback when amdsmi is unavailable. Reads VRAM bytes, utilization,
+    temperature, and GPU name directly from /sys/class/drm.
+
+    Returns:
+        List of GPU dictionaries matching the amdsmi output schema.
+    """
+    gpus = []
+    drm_cards = sorted(glob.glob("/sys/class/drm/card[0-9]*"))
+
+    for card_path in drm_cards:
+        device_path = Path(card_path) / "device"
+        if not device_path.exists():
+            continue
+
+        # Detect AMD GPU via vendor ID (0x1002 = AMD)
+        vendor_file = device_path / "vendor"
+        if not vendor_file.exists():
+            continue
+        try:
+            vendor = vendor_file.read_text().strip()
+        except OSError:
+            continue
+        if vendor != "0x1002":
+            continue
+
+        gpu: dict = {"vendor": "AMD", "index": len(gpus)}
+
+        # GPU name from boot_vga or modalias
+        name_file = device_path / "product_name"
+        if name_file.exists():
+            try:
+                gpu["name"] = name_file.read_text().strip() or "AMD GPU"
+            except OSError:
+                gpu["name"] = "AMD GPU"
+        else:
+            # Fallback: derive from card directory name
+            card_name = Path(card_path).name
+            gpu["name"] = f"AMD GPU ({card_name})"
+
+        # VRAM total
+        vram_total_file = device_path / "mem_info_vram_total"
+        if vram_total_file.exists():
+            try:
+                gpu["vram_total_bytes"] = int(vram_total_file.read_text().strip())
+            except (ValueError, OSError):
+                gpu["vram_total_bytes"] = 0
+        else:
+            gpu["vram_total_bytes"] = 0
+
+        # VRAM used
+        vram_used_file = device_path / "mem_info_vram_used"
+        if vram_used_file.exists():
+            try:
+                gpu["vram_used_bytes"] = int(vram_used_file.read_text().strip())
+            except (ValueError, OSError):
+                gpu["vram_used_bytes"] = 0
+        else:
+            gpu["vram_used_bytes"] = 0
+
+        # GPU utilization
+        busy_file = device_path / "gpu_busy_percent"
+        if busy_file.exists():
+            try:
+                gpu["gpu_usage_percent"] = int(busy_file.read_text().strip())
+            except (ValueError, OSError):
+                gpu["gpu_usage_percent"] = 0
+        else:
+            gpu["gpu_usage_percent"] = 0
+
+        # Temperature from hwmon
+        gpu["temperature_c"] = 0
+        hwmon_glob = sorted(glob.glob(os.path.join(str(device_path), "hwmon", "hwmon*", "temp1_input")))
+        if hwmon_glob:
+            try:
+                raw = int(Path(hwmon_glob[0]).read_text().strip())
+                gpu["temperature_c"] = round(raw / 1000.0, 1)
+            except (ValueError, OSError):
+                pass
+
+        gpus.append(gpu)
+
+    return gpus
+
+
 def _read_hwmon_sensors() -> list[dict]:
     """Parse hardware sensor data from /sys/class/hwmon.
 
@@ -231,7 +318,7 @@ def _fetch_metrics_sync(pretty: bool = False) -> bytes:
         except pynvml.NVMLError:
             pass
 
-    # AMD GPU metrics
+    # AMD GPU metrics (amdsmi first, sysfs fallback)
     if AMD_SMI_AVAILABLE:
         try:
             amdsmi.amdsmi_init()
@@ -268,6 +355,12 @@ def _fetch_metrics_sync(pretty: bool = False) -> bytes:
                 amdsmi.amdsmi_shut_down()
             except amdsmi.AmdSmiLibraryException:
                 pass
+    else:
+        # sysfs fallback for AMD GPUs
+        for gpu in _read_amd_gpu_sysfs():
+            gpu["index"] = gpu_index
+            gpu_data.append(gpu)
+            gpu_index += 1
 
     power_sensors = _read_hwmon_sensors()
     power_supply = _read_power_supply()
