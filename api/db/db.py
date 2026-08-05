@@ -17,7 +17,8 @@ def get_db_connection(
 
     Establishes a connection to the specified SQLite database file,
     enables foreign key enforcement, and sets row_factory to sqlite3.Row
-    for dict-like access to query results.
+    for dict-like access to query results. Creates the parent directory
+    and database file if they do not exist.
 
     Args:
         db_path: Path to the SQLite database file, a path string,
@@ -29,6 +30,9 @@ def get_db_connection(
         row_factory set to sqlite3.Row.
     """
     path_str = str(db_path) if isinstance(db_path, Path) else db_path
+
+    if path_str != ":memory:":
+        Path(path_str).parent.mkdir(parents=True, exist_ok=True)
 
     conn = sqlite3.connect(path_str)
     conn.execute("PRAGMA foreign_keys = ON;")

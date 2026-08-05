@@ -19,7 +19,7 @@ import time
 from api import __version__
 from api.config.paths import FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
-from api.hw.stats import get_system_metrics
+from api.hw.telemetry import get_system_metrics
 from api.hw.power import system_poweroff, system_sleep
 
 ensure_dotenv()

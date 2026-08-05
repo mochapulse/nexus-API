@@ -22,8 +22,8 @@ api/                    FastAPI backend
     paths.py             Resolved filesystem paths + ensure_dotenv()
     runtime.py           APP_NAME, PORT, DEBUG, API_KEY from dotenv
   hw/
-    stats.py             Real hardware metrics: psutil + NVML + AMD SMI
-    power.py             systemctl poweroff / suspend wrappers
+    telemetry.py        Real hardware metrics: psutil + NVML + AMD SMI + hwmon + power_supply
+    power.py            systemctl poweroff / suspend wrappers
   lib/
     templates.py         load_template(name) — reads JSONC, strips comments, returns dict
   test/
@@ -152,11 +152,13 @@ dependency: the `X-API-Key` header must equal `runtime.API_KEY` (from
 helpers (`/`, `/favicon.ico`) stay public. When `API_KEY` is unset the
 check fails closed in production (HTTP 503) and passes silently in DEBUG.
 
-### Hardware Metrics (api/hw/stats.py)
+### Hardware Metrics (api/hw/telemetry.py)
 
 `get_system_metrics()` is an async function that offloads blocking C-driver calls
 (NVML, AMD SMI, psutil) to a worker thread via `asyncio.to_thread()`. Returns
-orjson-encoded bytes that can be decoded to str or returned raw.
+orjson-encoded bytes that can be decoded to str or returned raw. Also reads
+hwmon and power_supply sensors from sysfs for voltage, current, power, and
+battery metrics.
 
 GPU detection is best-effort:
 - **NVIDIA**: `pynvml` — caught silently on `NVMLError`
@@ -240,9 +242,10 @@ Single workflow `docs.yml`:
 
 ## Implementation Status
 
-- **Telemetry is live** (`/api/v1/telemetry`): `api/hw/stats.py` returns real CPU,
-  RAM, swap, and GPU metrics via psutil, NVML, and AMD SMI. AMD SMI gracefully
-  degrades when `libamd_smi.so` is absent.
+- **Telemetry is live** (`/api/v1/telemetry`): `api/hw/telemetry.py` returns real CPU,
+  RAM, swap, GPU metrics via psutil, NVML, and AMD SMI. Also reads hwmon and
+  power_supply sensors for voltage, current, power, and battery data. AMD SMI
+  gracefully degrades when `libamd_smi.so` is absent.
 - **Power management is wired and DEBUG-gated** (`/api/v1/power/poweroff`,
   `/api/v1/power/sleep`): `api/hw/power.py` wraps `systemctl poweroff/suspend`.
   On success they return `{"poweroff_triggered": "true"}` /

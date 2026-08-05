@@ -9,7 +9,7 @@ and a React + TypeScript + Vite frontend.
 > **Real telemetry is live — power management and frontend are in progress.**
 
 - **Telemetry** (`/api/v1/telemetry`): Returns live hardware metrics (CPU, RAM,
-  swap, NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/stats.py`.
+  swap, NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/telemetry.py`.
 - **Power management** (`/api/v1/power/poweroff`, `/api/v1/power/sleep`): Wired
   to `api/hw/power.py` (`systemctl poweroff/suspend`). On success they return
   `{"poweroff_triggered": "true"}` / `{"sleep_triggered": "true"}`. Gated by
@@ -28,7 +28,7 @@ nexus-API/
 │   ├── main.py          # App entrypoint, route definitions
 │   ├── config/          # Runtime settings (dotenv) & paths
 │   ├── hw/              # Hardware interfaces (telemetry, power)
-│   │   ├── stats.py     # psutil + NVML + AMD SMI metrics collector
+│   │   ├── telemetry.py # psutil + NVML + AMD SMI metrics collector
 │   │   └── power.py     # systemctl poweroff / suspend wrappers
 │   ├── lib/             # Helpers (JSONC template loader)
 │   └── test/            # pytest suite (auth, health, telemetry, power)
@@ -56,7 +56,7 @@ All business routes live under the versioned `/api/v1` prefix. The root
 | GET    | `/api/v1/health`             | Liveness probe (version, uptime)      | computed live    |
 | POST   | `/api/v1/power/poweroff`     | Initiate system poweroff              | `api/hw/power.py` |
 | POST   | `/api/v1/power/sleep`        | Initiate system sleep                 | `api/hw/power.py` |
-| GET    | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/stats.py` |
+| GET    | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/telemetry.py` |
 | GET    | `/favicon.ico`               | SVG favicon                           | static file       |
 
 Power endpoints are **DEBUG-gated**: when `DEBUG=true` in `.env` they return
@@ -326,7 +326,7 @@ Docs are automatically built and deployed to GitHub Pages on every push to
 |----------|----------------------------------|
 | Backend  | FastAPI, Uvicorn                 |
 | Config   | python-dotenv                    |
-| HW       | psutil, pynvml, amdsmi (optional)|
+| HW       | psutil, nvidia-ml-py, amdsmi (optional)|
 | Docs     | Sphinx, Furo theme, autodoc      |
 | Frontend | React 19, TypeScript, Vite       |
 | Linting  | ESLint, typescript-eslint        |

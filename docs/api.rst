@@ -41,7 +41,7 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: api.hw.stats
+.. automodule:: api.hw.telemetry
    :members:
    :undoc-members:
    :show-inheritance:
