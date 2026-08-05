@@ -59,14 +59,16 @@ def _resolve_amd_slot(device_path: Path) -> str | None:
     """Resolve a sysfs device path to its PCI slot name.
 
     Reads the symlink target of /sys/class/drm/cardN/device to extract
-    the PCI slot (e.g. 0000:01:00.0).
+    the PCI slot. Returns both the full slot (e.g. '0000:01:00.0') and
+    the short form without domain ('01:00.0') for lspci matching.
     """
     try:
         resolved = device_path.resolve()
-        # Path ends with 0000:01:00.0 — take the last component
         slot = resolved.name
         if ":" in slot:
-            return slot
+            # lspci uses short form (01:00.0), sysfs uses full (0000:01:00.0)
+            short = slot.split(":", 1)[1] if slot.startswith("0000:") else slot
+            return short
     except OSError:
         pass
     return None
