@@ -12,6 +12,7 @@ Commands
 config      Open the .env file in VS Code.
 wol         Send a Wake-on-LAN packet to the ESP32.
 telemetry   Launch a TUI dashboard (default: Nexus).
+            Use ``-j`` / ``--json`` for raw JSON output.
 health      Print the Nexus API health status.
 poweroff    Power off the Nexus API host.
 sleep       Put the Nexus API host to sleep.
@@ -23,17 +24,23 @@ import argparse
 import sys
 
 from api.config.paths import ensure_dotenv
+import api.config.runtime as runtime
 
 
 def _telemetry_handler(args: argparse.Namespace) -> None:
-    """Dispatch telemetry to the correct TUI.
+    """Dispatch telemetry to the correct TUI or JSON output.
 
     Parameters
     ----------
     args : argparse.Namespace
         Parsed arguments — ``args.target`` is ``"nexus"`` or ``"esp"``.
+        ``args.json`` enables raw JSON output instead of the TUI.
     """
-    if args.target == "esp":
+    if args.json:
+        from api.cli.json_output import main as json_main
+
+        json_main(args.target)
+    elif args.target == "esp":
         from api.cli.esp_tui import main as esp_main
 
         esp_main()
@@ -49,21 +56,57 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         Configured :class:`argparse.ArgumentParser`.
     """
+    epilog = """\
+examples:
+  nexus-API config          Open .env in VS Code
+  nexus-API health          Show API health status
+  nexus-API telemetry       Nexus TUI dashboard (default)
+  nexus-API telemetry esp   ESP32 TUI dashboard
+  nexus-API telemetry -j    Nexus raw JSON output
+  nexus-API telemetry -j esp  ESP32 raw JSON output
+  nexus-API wol             Wake ESP32 via WOL
+  nexus-API poweroff        Shut down the API host
+  nexus-API sleep           Suspend the API host
+"""
+
     parser = argparse.ArgumentParser(
         prog="nexus-API",
         description="Nexus API command-line interface.",
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command")
-    sub.required = True
 
-    sub.add_parser("config", help="Open the .env file in VS Code.")
-    sub.add_parser("wol", help="Send WOL packet to the ESP32.")
-    sub.add_parser("health", help="Print Nexus API health status.")
-    sub.add_parser("poweroff", help="Power off the Nexus API host.")
-    sub.add_parser("sleep", help="Put the Nexus API host to sleep.")
+    sub.add_parser(
+        "config",
+        help="Open the .env file in VS Code.",
+        description="Open the workstation .env file in VS Code for editing.",
+    )
+    sub.add_parser(
+        "wol",
+        help="Send WOL packet to the ESP32.",
+        description="Send a Wake-on-LAN magic packet to power on the ESP32.",
+    )
+    sub.add_parser(
+        "health",
+        help="Print Nexus API health status.",
+        description="Query the Nexus API /health endpoint and display status.",
+    )
+    sub.add_parser(
+        "poweroff",
+        help="Power off the Nexus API host.",
+        description="Gracefully shut down the machine running the Nexus API.",
+    )
+    sub.add_parser(
+        "sleep",
+        help="Put the Nexus API host to sleep.",
+        description="Suspend (sleep) the machine running the Nexus API.",
+    )
 
     telemetry = sub.add_parser(
-        "telemetry", help="Launch a telemetry TUI dashboard."
+        "telemetry",
+        help="Launch a telemetry TUI dashboard.",
+        description="Launch a live Textual TUI with CPU, RAM, GPU, and sensor data.",
     )
     telemetry.add_argument(
         "target",
@@ -71,6 +114,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="nexus",
         choices=["nexus", "esp"],
         help="Target device: nexus (default) or esp.",
+    )
+    telemetry.add_argument(
+        "-j",
+        "--json",
+        action="store_true",
+        default=False,
+        help="Print raw JSON instead of the TUI dashboard.",
     )
 
     return parser
@@ -82,6 +132,16 @@ def main() -> None:
 
     parser = build_parser()
     args = parser.parse_args()
+
+    from api.cli.http_client import _NEXUS_BASE, _ESP_BASE
+
+    print(f"Nexus API: {_NEXUS_BASE}")
+    if runtime.ESP_IP:
+        print(f"ESP32:     {_ESP_BASE}")
+
+    if not args.command:
+        parser.print_help()
+        sys.exit(0)
 
     from api.cli.commands import (
         cmd_config,

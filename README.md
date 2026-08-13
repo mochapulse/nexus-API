@@ -21,6 +21,10 @@ and a React + TypeScript + Vite frontend.
   connectivity, updates, then sleeps 5 hours. Retries every 5 minutes
   on failure. State visible via `/api/v1/health` (`last_duckdns_update_ms`,
   `connectivity_delay_ms`). Disabled when `DEBUG=true`.
+- **CLI** (`api/cli/`): `nexus-API` command with subcommands for config, WOL,
+  telemetry (Textual TUI with `-j` JSON mode), health, poweroff, and sleep.
+  Cross-platform workstation deploy scripts for Linux (Bash alias) and
+  Windows (PowerShell + `.cmd` shim on user PATH).
 - **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
   no API integration.
 - **Tests**: 48 pytest tests in `api/test/` (auth matrix, health, telemetry
@@ -50,7 +54,7 @@ nexus-API/
 │   └── public/          # Static assets (favicon.svg)
 ├── templates/           # Real API response examples (JSONC, tutorial for agents)
 ├── docs/                # Sphinx documentation (autodoc + Furo theme)
-├── cmd/                 # Shell scripts (install.sh)
+├── cmd/                 # Shell scripts (install, CLI deploy)
 └── .github/workflows/   # CI/CD (Sphinx docs → GitHub Pages)
 ```
 
@@ -275,6 +279,10 @@ The `nexus-API` command-line interface provides direct access to the Nexus
 API and ESP32 device without needing curl or a browser.
 
 ```bash
+# From a workstation deploy (after deploy-cli-linux.sh or deploy-cli-windows.ps1):
+nexus-API <command> [args]
+
+# Or run directly from the repo:
 python -m api.cli <command> [args]
 ```
 
@@ -285,6 +293,8 @@ python -m api.cli <command> [args]
 | `health` | Print health status | Nexus API |
 | `telemetry` | Launch TUI dashboard | Nexus API (default) |
 | `telemetry esp` | Launch ESP TUI dashboard | ESP32 (HTTPS) |
+| `telemetry -j` | Print raw JSON (polling) | Nexus API (default) |
+| `telemetry -j esp` | Print raw JSON (polling) | ESP32 (HTTPS) |
 | `poweroff` | Power off server (with confirmation) | Nexus API |
 | `sleep` | Put server to sleep (with confirmation) | Nexus API |
 
@@ -305,6 +315,34 @@ Press `q` to quit.
 
 `wol`, `poweroff`, and `sleep` are blocked when `DEBUG=true` to prevent
 accidental actions during development.
+
+### CLI Workstation Deploy
+
+The CLI is an HTTP client — it only needs `httpx`, `python-dotenv`, and
+`textual`. Deploy scripts create an isolated workspace in `~/.nexus-API/workstation/`
+with a production `.env` (`DEBUG=false` enforced) and a virtualenv with pinned
+CLI dependencies. The full `requirements.txt` is NOT used;
+`requirements-cli.txt` pins only what the CLI needs.
+
+**Linux** (Bash alias, added to shell rc):
+
+```bash
+bash cmd/deploy-cli-linux.sh        # create workspace + alias
+source ~/.bashrc                    # or ~/.zshrc
+nexus-API health                    # verify
+```
+
+**Windows** (PowerShell, `.cmd` shim on user PATH):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File cmd\deploy-cli-windows.ps1
+# open a new terminal:
+nexus-API health
+```
+
+Windows deploy creates `%USERPROFILE%\.nexus-API\workstation\bin\nexus-API.cmd`
+and prepends it to the user PATH. Works in cmd, PowerShell, and Windows Terminal.
+Re-running is idempotent.
 
 ## Releases
 
@@ -380,6 +418,7 @@ Docs are automatically built and deployed to GitHub Pages on every push to
 |----------|----------------------------------|
 | Backend  | FastAPI, Uvicorn                 |
 | Config   | python-dotenv                    |
+| CLI      | httpx, Textual, plotext          |
 | HW       | psutil, nvidia-ml-py, amdsmi (optional)|
 | Docs     | Sphinx, Furo theme, autodoc      |
 | Frontend | React 19, TypeScript, Vite       |

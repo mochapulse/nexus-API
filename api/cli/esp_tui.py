@@ -1,29 +1,39 @@
 """Textual TUI for ESP32 device status.
 
 Renders a full-screen dashboard with network, memory, device, and
-firmware info from ``/api/status``.  Includes ASCII time-series charts
-rendered via :mod:`plotext` for heap, RSSI, task count, and free stack.
+firmware info from the ESP32 ``/api/status`` endpoint.  Uses native
+Textual widgets: ProgressBar with gradient colors, Sparkline for
+mini history charts, and PlotextPlot for detailed time-series.
 Auto-refreshes every 2 seconds.
 
 Usage::
 
-    python -m api.cli esp_tui
+    nexus-API telemetry esp
 """
 
 from __future__ import annotations
 
 from collections import deque
 
-import plotext as plt
 from textual.app import App, ComposeResult
+from textual.color import Gradient
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Header, Footer, Static
+from textual.widgets import (
+    Footer,
+    Header,
+    Label,
+    ProgressBar,
+    Sparkline,
+    Static,
+)
+from textual_plotext import PlotextPlot
 
 from api.cli.http_client import esp_get
 
 _REFRESH_INTERVAL = 2
-_CHART_SAMPLES = 30
-_CHART_WIDTH = 40
+_SPARKLINE_SAMPLES = 30
+
+_GRADIENT_HEALTH = Gradient.from_colors("#2ecc71", "#f1c40f", "#e74c3c")
 
 
 def _fmt_bytes(n: int | float) -> str:
@@ -61,81 +71,53 @@ def _fmt_rssi(rssi: int) -> str:
     return f"{rssi} dBm {bars[idx]}"
 
 
-def _bar(percent: float, width: int = 20) -> str:
-    """Render a text progress bar.
-
-    Parameters
-    ----------
-    percent : float
-        Value between 0 and 100.
-    width : int
-        Character width of the bar.
-
-    Returns:
-        A string like ``"████████░░░░░░░░░░░░ 43.9%"``.
-    """
-    filled = int(percent / 100 * width)
-    empty = width - filled
-    bar = "█" * filled + "░" * empty
-    return f"{bar} {percent:.1f}%"
-
-
-def _plotext_chart(
-    data: list[float],
-    title: str,
-    width: int = _CHART_WIDTH,
-) -> str:
-    """Render an ASCII line chart via plotext.
-
-    Parameters
-    ----------
-    data : list[float]
-        Time-series values to plot.
-    title : str
-        Chart title.
-    width : int
-        Character width of the chart.
-
-    Returns:
-        Multi-line string containing the rendered chart.
-    """
-    plt.clear_figure()
-    plt.plot_size(width, 8)
-    plt.title(title)
-    plt.theme("pro")
-    if len(data) > 1:
-        plt.plot(data, label="value")
-        plt.ylim(min(data) * 0.9 if min(data) > 0 else 0, max(data) * 1.1)
-    plt.no_x_axis()
-    plt.no_y_axis()
-    return plt.build()
-
-
 class EspTui(App):
     """Full-screen Textual app for ESP32 device status."""
 
     CSS = """
     Screen { background: $surface }
     .section { height: auto; margin: 0 1; padding: 0 1; }
-    .chart-box { height: auto; border: solid $primary; padding: 0 1; margin: 0 1; }
+    .bar-row { height: 1; }
+    .bar-label { width: 8; }
+    .sparkline-row { height: 5; margin: 0 1; }
+    .device-card { border: solid $primary; padding: 0 1; margin: 0 1; height: auto; }
+    .chart-plot { height: 10; margin: 0 1; border: solid $primary; }
     """
 
     BINDINGS = [("q", "quit", "Quit")]
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._heap_data: deque[float] = deque(maxlen=_CHART_SAMPLES)
-        self._rssi_data: deque[float] = deque(maxlen=_CHART_SAMPLES)
-        self._tasks_data: deque[float] = deque(maxlen=_CHART_SAMPLES)
-        self._stack_data: deque[float] = deque(maxlen=_CHART_SAMPLES)
+        self._heap_data: deque[float] = deque(maxlen=_SPARKLINE_SAMPLES)
+        self._rssi_data: deque[float] = deque(maxlen=_SPARKLINE_SAMPLES)
+        self._tasks_data: deque[float] = deque(maxlen=_SPARKLINE_SAMPLES)
+        self._stack_data: deque[float] = deque(maxlen=_SPARKLINE_SAMPLES)
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Static("Loading...", id="network")
-        yield Static("", id="memory")
-        yield Static("", id="device")
-        yield Static("", id="firmware")
-        yield Static("", id="charts")
+
+        with Vertical(id="network-section"):
+            yield Static("  NETWORK", classes="section")
+            yield Static("", id="network")
+            with Horizontal(classes="bar-row"):
+                yield Label("  RSSI", classes="bar-label")
+                yield Sparkline([], id="rssi-spark", summary_function=max)
+
+        with Vertical(id="memory-section"):
+            yield Static("  MEMORY", classes="section")
+            yield Static("", id="memory")
+            with Horizontal(classes="bar-row"):
+                yield Label("  Heap", classes="bar-label")
+                yield ProgressBar(total=100, id="heap-bar", gradient=_GRADIENT_HEALTH)
+
+        yield Static("", id="device", classes="device-card")
+        yield Static("", id="firmware", classes="section")
+
+        with Vertical(id="charts-section"):
+            yield Static("  CHARTS (last 30 samples)", classes="section")
+            yield PlotextPlot(id="heap-chart", classes="chart-plot")
+            yield PlotextPlot(id="rssi-chart", classes="chart-plot")
+
         yield Footer()
 
     def on_mount(self) -> None:
@@ -163,12 +145,13 @@ class EspTui(App):
         rssi = data.get("wifi_rssi", 0)
         self._rssi_data.append(rssi)
         self.query_one("#network", Static).update(
-            f"  NETWORK\n"
             f"    Wi-Fi   {wifi}\n"
             f"    IP      {ip}\n"
             f"    MAC     {mac}\n"
             f"    RSSI    {_fmt_rssi(rssi)}"
         )
+        spark = self.query_one("#rssi-spark", Sparkline)
+        spark.data = list(self._rssi_data)
 
     def _update_memory(self, data: dict) -> None:
         heap_free = data.get("heap_free", 0)
@@ -184,13 +167,12 @@ class EspTui(App):
         else:
             pct = 0
         self.query_one("#memory", Static).update(
-            f"  MEMORY\n"
-            f"    Heap    {_bar(pct)}  {_fmt_bytes(heap_free)} / "
-            f"{_fmt_bytes(heap_total)}\n"
+            f"    Heap    {_fmt_bytes(heap_free)} / {_fmt_bytes(heap_total)}\n"
             f"    Min     {_fmt_bytes(heap_min)}\n"
             f"    Stack   {_fmt_bytes(stack)}\n"
             f"    Tasks   {tasks}"
         )
+        self.query_one("#heap-bar", ProgressBar).update(progress=pct)
 
     def _update_device(self, data: dict) -> None:
         model = data.get("chip_model", "?")
@@ -225,22 +207,31 @@ class EspTui(App):
         )
 
     def _update_charts(self, data: dict) -> None:
-        heap_chart = _plotext_chart(
-            list(self._heap_data), "Heap Free"
+        self._plotext_line(
+            "heap-chart", list(self._heap_data), "Heap Free (bytes)"
         )
-        rssi_chart = _plotext_chart(
-            list(self._rssi_data), "Wi-Fi RSSI"
+        self._plotext_line(
+            "rssi-chart", list(self._rssi_data), "Wi-Fi RSSI (dBm)"
         )
-        tasks_chart = _plotext_chart(
-            list(self._tasks_data), "Tasks"
-        )
-        stack_chart = _plotext_chart(
-            list(self._stack_data), "Free Stack"
-        )
-        self.query_one("#charts", Static).update(
-            f"  CHARTS (last {_CHART_SAMPLES} samples)\n"
-            f"{heap_chart}\n{rssi_chart}\n{tasks_chart}\n{stack_chart}"
-        )
+
+    def _plotext_line(self, widget_id: str, values: list[float], title: str) -> None:
+        """Update a PlotextPlot widget with a line chart."""
+        try:
+            widget = self.query_one(f"#{widget_id}", PlotextPlot)
+            plt = widget.plt
+            plt.clear_figure()
+            plt.title(title)
+            plt.theme("pro")
+            if len(values) > 1:
+                plt.plot(values, label="value")
+                lo = min(values) * 0.9 if min(values) > 0 else 0
+                hi = max(values) * 1.1 if max(values) > 0 else 1
+                plt.ylim(lo, hi)
+            plt.no_x_axis()
+            plt.no_y_axis()
+            widget.refresh()
+        except Exception:
+            pass
 
 
 def main() -> None:

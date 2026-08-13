@@ -46,9 +46,12 @@ api/                    FastAPI backend
   .env                   Gitignored local config (ensure_dotenv copies from example)
 conftest.py              Root pytest fixtures (client, auth_headers) + sys.path bootstrap
 requirements.txt         Fully pinned Python deps (incl. pytest)
+requirements-cli.txt     CLI-only pinned deps (httpx, python-dotenv, textual, plotext)
 cmd/
   install.sh             Bootstrap script: packages → venv → pip → polkit → systemd
                          Use -dev flag to skip polkit and systemd installation
+  deploy-cli-linux.sh    Deploy CLI workstation: venv + .env + shell alias
+  deploy-cli-windows.ps1 Deploy CLI workstation on Windows: venv + .env + .cmd shim + user PATH
 daemon/
   nexus-api.service      Systemd unit with hardening (ProtectSystem, PrivateTmp, etc.)
 docs/
@@ -144,6 +147,32 @@ sudo systemctl restart nexus-api                              # version is read 
 Verify with `systemctl status nexus-api` and `GET /api/v1/health`
 (`X-API-Key` header) — the reported version must match the release tag.
 A stale version usually means: tags not fetched or service not restarted.
+
+### CLI Workstation Deploy
+
+The CLI is an HTTP client — it needs only a handful of deps (httpx, textual,
+python-dotenv). Deploy scripts create a workspace in `~/.nexus-API/workstation/`
+with a `.env` (DEBUG=false enforced) and an isolated virtualenv. The full
+`requirements.txt` is NOT used; `requirements-cli.txt` pins only what the
+CLI needs, avoiding platform-blocked packages (uvloop, amdsmi) on Windows.
+
+**Linux** (Bash alias, added to shell rc):
+```bash
+bash cmd/deploy-cli-linux.sh        # create workspace + alias
+source ~/.bashrc                    # or ~/.zshrc
+nexus-API health                    # verify
+```
+
+**Windows** (PowerShell, .cmd shim on user PATH):
+```powershell
+powershell -ExecutionPolicy Bypass -File cmd\deploy-cli-windows.ps1
+# open a new terminal:
+nexus-API health
+```
+
+Windows deploy creates `%USERPROFILE%\.nexus-API\workstation\bin\nexus-API.cmd`
+and prepends it to the user PATH. Works in cmd, PowerShell, and Windows Terminal.
+Re-running is idempotent.
 
 ## Architecture Patterns
 

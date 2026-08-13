@@ -18,6 +18,7 @@ cmd_sleep()
     Put the Nexus API host to sleep.
 """
 
+import shutil
 import subprocess
 import sys
 
@@ -30,13 +31,18 @@ def cmd_config() -> None:
     """Open the ``.env`` file in VS Code.
 
     Uses ``code`` (VS Code CLI) to open the file for editing.
-    Exits with an error if the file does not exist.
+    Exits with an error if the file does not exist or VS Code is not installed.
     """
     if not DOTENV_PATH.exists():
         print(f"Error: .env file not found at {DOTENV_PATH}", file=sys.stderr)
         sys.exit(1)
+    code = shutil.which("code")
+    if not code:
+        print("Error: VS Code CLI ('code') not found on PATH.", file=sys.stderr)
+        print("Install VS Code and ensure 'code' is available on PATH.", file=sys.stderr)
+        sys.exit(1)
     print(f"Opening {DOTENV_PATH} in VS Code...")
-    subprocess.run(["code", str(DOTENV_PATH)], check=False)
+    subprocess.run([code, str(DOTENV_PATH)], check=False)
 
 
 def cmd_wol() -> None:
