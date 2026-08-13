@@ -6,12 +6,12 @@
 
 .DESCRIPTION
     Creates %USERPROFILE%\.nexus-API\workstation\ with:
-      .env   — production config (DEBUG=false, safe for real power commands)
-      venv\  — isolated Python virtualenv with pinned CLI deps
-      bin\   — nexus-API.cmd shim for the permanent alias
+      .env   -- production config (DEBUG=false, safe for real power commands)
+      venv\  -- isolated Python virtualenv with pinned CLI deps
+      bin\   -- nexus-API.cmd shim for the permanent alias
 
     Adds %USERPROFILE%\.nexus-API\workstation\bin to the user PATH.
-    Idempotent — safe to run multiple times.
+    Idempotent -- safe to run multiple times.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File cmd\deploy-cli-windows.ps1
@@ -20,7 +20,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# ── 1. Resolve paths ────────────────────────────────────────────────
+# -- 1. Resolve paths ------------------------------------------------
 $ScriptDir  = $PSScriptRoot
 $RepoRoot   = Split-Path $ScriptDir -Parent
 $Workstation = Join-Path $env:USERPROFILE '.nexus-API\workstation'
@@ -33,16 +33,17 @@ $EnvExample = Join-Path $RepoRoot 'api\.env.example'
 Write-Host "Script Location: $ScriptDir"
 Write-Host "Project Root:    $RepoRoot"
 
-# ── 2. Create workstation directory ─────────────────────────────────
-Write-Host "`nCreating $Workstation ..."
+# -- 2. Create workstation directory ----------------------------------
+Write-Host ""
+Write-Host "Creating $Workstation ..."
 if (-not (Test-Path $Workstation)) {
     New-Item -ItemType Directory -Path $Workstation | Out-Null
 }
 
-# ── 3. Copy .env.example → workstation/.env (force DEBUG=false) ─────
+# -- 3. Copy .env.example to workstation/.env (force DEBUG=false) -----
 if (-not (Test-Path $EnvFile)) {
     if (-not (Test-Path $EnvExample)) {
-        Write-Error "$EnvExample not found — cannot create .env"
+        Write-Error "$EnvExample not found - cannot create .env"
         exit 1
     }
     Copy-Item $EnvExample $EnvFile -Force
@@ -55,9 +56,8 @@ if (-not (Test-Path $EnvFile)) {
     Write-Host "Workstation .env already exists (DEBUG=false enforced)"
 }
 
-# ── 4. Detect Python ────────────────────────────────────────────────
+# -- 4. Detect Python -------------------------------------------------
 function Find-Python {
-    # Prefer the py launcher (standard python.org install)
     $py = Get-Command py -ErrorAction SilentlyContinue
     if ($py) {
         try {
@@ -69,7 +69,6 @@ function Find-Python {
             }
         } catch {}
     }
-    # Fallback to bare python on PATH
     $py = Get-Command python -ErrorAction SilentlyContinue
     if ($py) {
         try {
@@ -94,12 +93,13 @@ or download from https://www.python.org/downloads/
     exit 1
 }
 
-# ── 5. Create virtualenv + install deps ──────────────────────────────
+# -- 5. Create virtualenv + install deps ------------------------------
 $PyExe = if ($PyCmd -eq 'py') { 'py' } else { 'python' }
 $PyArgs = if ($PyCmd -eq 'py') { @('-3') } else { @() }
 
 if (-not (Test-Path (Join-Path $VenvDir 'Scripts\python.exe'))) {
-    Write-Host "`nCreating virtualenv ..."
+    Write-Host ""
+    Write-Host "Creating virtualenv ..."
     & $PyExe @PyArgs -m venv $VenvDir
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to create virtualenv"
@@ -107,7 +107,8 @@ if (-not (Test-Path (Join-Path $VenvDir 'Scripts\python.exe'))) {
     }
 }
 
-Write-Host "`nInstalling/updating dependencies ..."
+Write-Host ""
+Write-Host "Installing/updating dependencies ..."
 & "$VenvDir\Scripts\python.exe" -m pip install --upgrade pip -q 2>&1 | Out-Null
 & "$VenvDir\Scripts\python.exe" -m pip install -r $Requirements -q
 if ($LASTEXITCODE -ne 0) {
@@ -115,22 +116,21 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# ── 6. Create nexus-API.cmd shim ────────────────────────────────────
+# -- 6. Create nexus-API.cmd shim ------------------------------------
 if (-not (Test-Path $BinDir)) {
     New-Item -ItemType Directory -Path $BinDir | Out-Null
 }
 
 $ShimPath = Join-Path $BinDir 'nexus-API.cmd'
-@"
-@echo off
-set "NEXUS_DOTENV_PATH=$env:USERPROFILE\.nexus-API\workstation\.env"
-cd /d "$RepoRoot"
-"$VenvDir\Scripts\python.exe" -m api.cli %*
-"@ | Set-Content -Path $ShimPath -Encoding ASCII
+$ShimContent = "@echo off`r`n" +
+    "set `"NEXUS_DOTENV_PATH=$env:USERPROFILE\.nexus-API\workstation\.env`"`r`n" +
+    "cd /d `"$RepoRoot`"`r`n" +
+    "`"$VenvDir\Scripts\python.exe`" -m api.cli %*"
+Set-Content -Path $ShimPath -Value $ShimContent -Encoding ASCII
 
 Write-Host "Wrote shim: $ShimPath"
 
-# ── 7. Add bin dir to user PATH (idempotent) ────────────────────────
+# -- 7. Add bin dir to user PATH (idempotent) ------------------------
 $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if ($UserPath -notlike "*$BinDir*") {
     if ($UserPath) {
@@ -139,24 +139,23 @@ if ($UserPath -notlike "*$BinDir*") {
         $NewPath = $BinDir
     }
     [Environment]::SetEnvironmentVariable('Path', $NewPath, 'User')
-    # Refresh PATH in this session too
     $env:Path = "$env:Path;$BinDir"
     Write-Host "Added to user PATH: $BinDir"
 } else {
     Write-Host "Already in user PATH: $BinDir"
 }
 
-# ── 8. Verify ───────────────────────────────────────────────────────
+# -- 8. Verify -------------------------------------------------------
 Write-Host ""
-Write-Host "──────────────────────────────────────"
+Write-Host "--------------------------------------"
 Write-Host "  Deploy complete"
-Write-Host "──────────────────────────────────────"
+Write-Host "--------------------------------------"
 Write-Host "  .env:   $EnvFile  (DEBUG=false)"
 Write-Host "  venv:   $VenvDir"
 Write-Host "  alias:  nexus-API"
 Write-Host "  shim:   $ShimPath"
 Write-Host "  shell:  User PATH"
-Write-Host "──────────────────────────────────────"
+Write-Host "--------------------------------------"
 Write-Host ""
 Write-Host "Open a NEW terminal, then run:"
 Write-Host "  nexus-API --help"
