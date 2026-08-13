@@ -297,7 +297,7 @@ Single workflow `docs.yml`:
   RAM, swap, GPU metrics via psutil, NVML, and AMD SMI. Also reads hwmon and
   power_supply sensors for voltage, current, power, and battery data. AMD SMI
   gracefully degrades when `libamd_smi.so` is absent.
-- **Power management is wired and DEBUG-gated** (`/api/v1/power/poweroff`,
+- **Power management is live** (`/api/v1/power/poweroff`,
   `/api/v1/power/sleep`): `api/hw/power.py` wraps `systemctl poweroff/suspend`.
   On success they return `{"poweroff_triggered": "true"}` /
   `{"sleep_triggered": "true"}`. When `DEBUG=true`, both endpoints return stub

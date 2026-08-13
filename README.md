@@ -6,15 +6,15 @@ and a React + TypeScript + Vite frontend.
 
 ## Current State
 
-> **Real telemetry is live — power management and frontend are in progress.**
+> **Real telemetry and power management are live — frontend is in progress.**
 
 - **Telemetry** (`/api/v1/telemetry`): Returns live hardware metrics (CPU, RAM,
   swap, NVIDIA/AMD GPU) via `psutil`, NVML, and AMD SMI. Backed by `api/hw/telemetry.py`.
-- **Power management** (`/api/v1/power/poweroff`, `/api/v1/power/sleep`): Wired
-  to `api/hw/power.py` (`systemctl poweroff/suspend`). On success they return
-  `{"poweroff_triggered": "true"}` / `{"sleep_triggered": "true"}`. Gated by
-  `DEBUG` — in dev mode the endpoints return stub templates instead of
-  executing real commands.
+- **Power management** (`/api/v1/power/poweroff`, `/api/v1/power/sleep`): Live
+  and functional. Backed by `api/hw/power.py` (`systemctl poweroff/suspend`).
+  On success they return `{"poweroff_triggered": "true"}` /
+  `{"sleep_triggered": "true"}`. Gated by `DEBUG` — in dev mode the endpoints
+  return stub templates instead of executing real commands.
 - **DuckDNS dynamic DNS**: Background service (`api/net/duckdns_service.py`)
   automatically updates a DuckDNS subdomain with the host's public IP.
   Runs as a lifespan-managed asyncio task in production — waits for
