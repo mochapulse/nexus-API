@@ -22,7 +22,7 @@ REPO_ROOT="$( cd -P "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd )"
 
 WORKSTATION="$HOME/.nexus-API/workstation"
 VENV_DIR="$WORKSTATION/venv"
-REQUIREMENTS="$REPO_ROOT/requirements.txt"
+REQUIREMENTS="$REPO_ROOT/requirements-cli.txt"
 
 # ── 1. Create workstation directory ──────────────────────────────────
 echo "📁 Creating $WORKSTATION …"

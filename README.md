@@ -121,7 +121,7 @@ rules or systemd service — ideal for local development.
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements.txt   # or requirements-cli.txt for CLI-only
 ```
 
 **Run the test suite** (from the repo root, venv active):
@@ -228,7 +228,7 @@ git fetch --tags
 
 # 2. Install any new dependencies (when requirements.txt changed)
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt   # or requirements-cli.txt for CLI-only
 
 # 3. Restart — the version is read at startup, so a restart is required
 sudo systemctl restart nexus-api
@@ -302,14 +302,29 @@ python -m api.cli <command> [args]
 
 The telemetry command launches a full-screen Textual dashboard:
 
-- **Nexus** (`telemetry` or `telemetry nexus`): CPU per-core bars, RAM/Swap
-  progress bars, GPU cards (usage, VRAM, temperature), power sensors, and
-  power supply status.
-- **ESP** (`telemetry esp`): Network info, memory gauges, device details,
-  firmware info, and ASCII time-series charts (heap, RSSI, tasks, stack)
-  rendered via plotext.
+- **Nexus** (`telemetry` or `telemetry nexus`): CPU sparkline with per-core
+  bars, RAM/Swap progress bars with gradient colors, GPU cards (usage, VRAM,
+  temperature), power sensors, and power supply status.
+- **ESP** (`telemetry esp`): Network info (Wi-Fi RSSI sparkline), memory
+  gauges (heap/stack progress bars), device details (chip model, flash,
+  features), firmware info, and PlotextPlot time-series charts for heap
+  and RSSI history.
 
 Press `q` to quit.
+
+### JSON output mode
+
+Add `-j` / `--json` to any telemetry command to print pretty-printed JSON
+instead of the TUI. Polls every 2 seconds, clearing the screen on each
+refresh. Useful for piping to `jq` or logging:
+
+```bash
+nexus-API telemetry -j          # Nexus API telemetry as JSON
+nexus-API telemetry -j esp      # ESP32 status as JSON
+nexus-API telemetry -j | jq .cpu.overall_usage_percent
+```
+
+Press `Ctrl+C` to stop.
 
 ### DEBUG gating
 
@@ -318,31 +333,164 @@ accidental actions during development.
 
 ### CLI Workstation Deploy
 
-The CLI is an HTTP client — it only needs `httpx`, `python-dotenv`, and
-`textual`. Deploy scripts create an isolated workspace in `~/.nexus-API/workstation/`
-with a production `.env` (`DEBUG=false` enforced) and a virtualenv with pinned
-CLI dependencies. The full `requirements.txt` is NOT used;
-`requirements-cli.txt` pins only what the CLI needs.
+The CLI is an HTTP client — it needs only `httpx`, `python-dotenv`,
+`textual`, `plotext`, and `textual-plotext`. Deploy scripts create an
+isolated workspace in `~/.nexus-API/workstation/` with a production `.env`
+(`DEBUG=false` enforced) and a virtualenv with pinned CLI dependencies.
+The full `requirements.txt` is NOT used; `requirements-cli.txt` pins only
+what the CLI needs.
 
-**Linux** (Bash alias, added to shell rc):
+#### Linux
+
+**Step 1 — Deploy:**
 
 ```bash
-bash cmd/deploy-cli-linux.sh        # create workspace + alias
-source ~/.bashrc                    # or ~/.zshrc
-nexus-API health                    # verify
+bash cmd/deploy-cli-linux.sh
 ```
 
-**Windows** (PowerShell, `.cmd` shim on user PATH):
+**Expected output:**
 
-```powershell
-powershell -ExecutionPolicy Bypass -File cmd\deploy-cli-windows.ps1
-# open a new terminal:
+```
+Creating ~/.nexus-API/workstation ...
+Created workstation .env (DEBUG=false)
+Creating virtualenv ...
+Installing/updating dependencies ...
+Added alias to ~/.bashrc
+--------------------------------------
+  Deploy complete
+--------------------------------------
+  .env:     ~/.nexus-API/workstation/.env  (DEBUG=false)
+  venv:     ~/.nexus-API/workstation/venv
+  alias:    nexus-API
+  shell:    ~/.bashrc
+--------------------------------------
+Run:  source ~/.bashrc
+Then: nexus-API --help
+```
+
+**Step 2 — Reload shell and verify:**
+
+```bash
+source ~/.bashrc
+nexus-API --help
+```
+
+**Step 3 — Point at your server:**
+
+Edit the workstation `.env` to set `NEXUS_IP` and `NEXUS_PORT`:
+
+```bash
+nano ~/.nexus-API/workstation/.env
+```
+
+**Step 4 — Test:**
+
+```bash
 nexus-API health
 ```
 
-Windows deploy creates `%USERPROFILE%\.nexus-API\workstation\bin\nexus-API.cmd`
-and prepends it to the user PATH. Works in cmd, PowerShell, and Windows Terminal.
-Re-running is idempotent.
+#### Windows
+
+**Prerequisites:** Python 3.12+ installed (from python.org or
+`winget install Python.Python.3.12`).
+
+**Step 1 — Clone and deploy:**
+
+```powershell
+git clone https://github.com/mochapulse/nexus-API.git
+cd nexus-API
+powershell -ExecutionPolicy Bypass -File cmd\deploy-cli-windows.ps1
+```
+
+> **Why `-ExecutionPolicy Bypass`?** Windows PowerShell 5 has a default
+> `Restricted` execution policy that blocks `.ps1` files. This flag is
+> per-invocation only — it does not change your system policy.
+
+**Expected output:**
+
+```
+Script Location: C:\Users\you\nexus-API\cmd
+Project Root:    C:\Users\you\nexus-API
+
+Creating C:\Users\you\.nexus-API\workstation ...
+Created workstation .env (DEBUG=false)
+Found Python 3.12 via py launcher
+
+Creating virtualenv ...
+Installing/updating dependencies ...
+
+Wrote shim: C:\Users\you\.nexus-API\workstation\bin\nexus-API.cmd
+Added to user PATH: C:\Users\you\.nexus-API\workstation\bin
+
+--------------------------------------
+  Deploy complete
+--------------------------------------
+  .env:   C:\Users\you\.nexus-API\workstation\.env  (DEBUG=false)
+  venv:   C:\Users\you\.nexus-API\workstation\venv
+  alias:  nexus-API
+  shim:   C:\Users\you\.nexus-API\workstation\bin\nexus-API.cmd
+  shell:  User PATH
+--------------------------------------
+
+Open a NEW terminal, then run:
+  nexus-API --help
+```
+
+**Step 2 — Open a NEW terminal** (PATH changes do not apply to the current
+session), then verify:
+
+```powershell
+nexus-API --help
+```
+
+**Step 3 — Point at your server:**
+
+```powershell
+notepad $env:USERPROFILE\.nexus-API\workstation\.env
+```
+
+Set `NEXUS_IP` and `NEXUS_PORT` to match your Nexus server, save, close.
+
+**Step 4 — Test:**
+
+```powershell
+nexus-API health
+```
+
+**Expected output:**
+
+```
+Nexus API: http://192.168.1.17:8000/api/v1
+  Status:             ok
+  Version:            0.3.0
+  Uptime:             2h 15m 30s
+  Timestamp:          2026-08-13T10:30:00
+  Last DNS update:    1723527600000
+  Connectivity ms:    245
+```
+
+#### Windows notes
+
+- The deploy creates `%USERPROFILE%\.nexus-API\workstation\bin\nexus-API.cmd`
+  and prepends it to the **user PATH**. Works in cmd, PowerShell, and
+  Windows Terminal.
+- Re-running is idempotent — safe to run multiple times.
+- The script tries `python` directly before `py -3` (more reliable on some
+  systems). If venv creation fails, it prints the exact manual command to try.
+- The `.ps1` script is pure ASCII — no encoding issues on PowerShell 5.
+
+#### Uninstall
+
+```powershell
+# Remove the workspace
+Remove-Item -Recurse -Force $env:USERPROFILE\.nexus-API
+
+# Remove from user PATH (PowerShell)
+[Environment]::SetEnvironmentVariable('Path', (
+    [Environment]::GetEnvironmentVariable('Path','User') -replace
+    ';C:\\Users\\[^;]+\\.nexus-API\\workstation\\bin'
+), 'User')
+```
 
 ## Releases
 

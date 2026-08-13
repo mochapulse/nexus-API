@@ -23,6 +23,8 @@ api/                    FastAPI backend
     commands.py          config, wol, health, poweroff, sleep handlers
     nexus_tui.py         Textual TUI for Nexus telemetry
     esp_tui.py           Textual TUI for ESP status + plotext charts
+    json_output.py       Raw JSON output mode for telemetry
+    __main__.py          Entry point for `python -m api.cli`
   config/
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
@@ -259,6 +261,7 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 - Package manager: pnpm (no npm/yarn)
 - Tests: pytest via `python -m pytest` from the repo root
 - `.env` is gitignored; `.env.example` is committed
+- PowerShell scripts (.ps1) must be pure ASCII -- no em-dashes, arrows, or box-drawing characters (PowerShell 5 cannot parse them)
 
 ## Environment Variables
 
@@ -309,11 +312,11 @@ Single workflow `docs.yml`:
   via `/api/v1/health` (`last_duckdns_update_ms`, `connectivity_delay_ms`).
   Disabled when `DEBUG=true` or `DUCKDNS_DOMAIN`/`DUCKDNS_TOKEN` are unset.
 - **CLI is live** (`api/cli/`): `nexus-API` command with subcommands for
-  config, WOL, telemetry (Textual TUI), health, poweroff, and sleep.
-  WOL/poweroff/sleep are DEBUG-gated. Telemetry TUIs auto-refresh every 2s.
-  Nexus TUI shows CPU/RAM/swap/GPU/sensors. ESP TUI shows network/memory/
-  device/firmware + plotext ASCII charts. Uses `NEXUS_IP`/`NEXUS_PORT` for
-  Nexus API and `ESP_IP`/`ESP_PORT` for ESP32.
+  config, WOL, telemetry (Textual TUI with `-j` JSON mode), health, poweroff, and sleep.
+  WOL/poweroff/sleep are DEBUG-gated. Telemetry TUIs use native Textual widgets
+  (ProgressBar, Sparkline) and auto-refresh every 2s. ESP TUI includes PlotextPlot
+  time-series charts. Cross-platform workstation deploy scripts for Linux and Windows.
+  Uses `NEXUS_IP`/`NEXUS_PORT` for Nexus API and `ESP_IP`/`ESP_PORT` for ESP32.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
