@@ -61,8 +61,9 @@ function Find-Python {
     $py = Get-Command py -ErrorAction SilentlyContinue
     if ($py) {
         try {
-            $ver = & py -3 -c "import sys; print('.'.join(map(str,sys.version_info[:2])))" 2>$null
-            if ($ver) {
+            $verOutput = & py -3 --version 2>&1
+            if ($verOutput -match 'Python (\d+\.\d+)') {
+                $ver = $Matches[1]
                 Write-Host "Found Python $ver via py launcher"
                 return 'py'
             }
@@ -72,8 +73,9 @@ function Find-Python {
     $py = Get-Command python -ErrorAction SilentlyContinue
     if ($py) {
         try {
-            $ver = & python -c "import sys; print('.'.join(map(str,sys.version_info[:2])))" 2>$null
-            if ($ver) {
+            $verOutput = & python --version 2>&1
+            if ($verOutput -match 'Python (\d+\.\d+)') {
+                $ver = $Matches[1]
                 Write-Host "Found Python $ver"
                 return 'python'
             }
