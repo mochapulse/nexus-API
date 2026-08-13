@@ -94,17 +94,38 @@ or download from https://www.python.org/downloads/
 }
 
 # -- 5. Create virtualenv + install deps ------------------------------
-$PyExe = if ($PyCmd -eq 'py') { 'py' } else { 'python' }
-$PyArgs = if ($PyCmd -eq 'py') { @('-3') } else { @() }
 $VenvPython = Join-Path $VenvDir 'Scripts\python.exe'
 
 if (-not (Test-Path $VenvPython)) {
     Write-Host ""
     Write-Host "Creating virtualenv ..."
-    & $PyExe @PyArgs -m venv $VenvDir 2>&1 | Out-Null
-    if (-not (Test-Path $VenvPython)) {
-        Write-Error "Failed to create virtualenv at $VenvDir"
-        Write-Error "Try manually: $PyExe -m venv $VenvDir"
+
+    # Try python directly first (more reliable than py launcher)
+    $venvCreated = $false
+    $pythonCmds = @(
+        @{ Exe = 'python'; Args = @() },
+        @{ Exe = 'py';      Args = @('-3') }
+    )
+
+    foreach ($cmd in $pythonCmds) {
+        try {
+            $null = & $($cmd.Exe) @($cmd.Args) -m venv --help 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                & $($cmd.Exe) @($cmd.Args) -m venv $VenvDir 2>&1 | Out-Null
+                if (Test-Path $VenvPython) {
+                    $venvCreated = $true
+                    break
+                }
+            }
+        } catch {}
+    }
+
+    if (-not $venvCreated) {
+        Write-Error @"
+Failed to create virtualenv. Python venv module may not be available.
+Try manually:
+  python -m venv $VenvDir
+"@
         exit 1
     }
 }
