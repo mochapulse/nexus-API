@@ -96,21 +96,23 @@ or download from https://www.python.org/downloads/
 # -- 5. Create virtualenv + install deps ------------------------------
 $PyExe = if ($PyCmd -eq 'py') { 'py' } else { 'python' }
 $PyArgs = if ($PyCmd -eq 'py') { @('-3') } else { @() }
+$VenvPython = Join-Path $VenvDir 'Scripts\python.exe'
 
-if (-not (Test-Path (Join-Path $VenvDir 'Scripts\python.exe'))) {
+if (-not (Test-Path $VenvPython)) {
     Write-Host ""
     Write-Host "Creating virtualenv ..."
-    & $PyExe @PyArgs -m venv $VenvDir
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create virtualenv"
+    & $PyExe @PyArgs -m venv $VenvDir 2>&1 | Out-Null
+    if (-not (Test-Path $VenvPython)) {
+        Write-Error "Failed to create virtualenv at $VenvDir"
+        Write-Error "Try manually: $PyExe -m venv $VenvDir"
         exit 1
     }
 }
 
 Write-Host ""
 Write-Host "Installing/updating dependencies ..."
-& "$VenvDir\Scripts\python.exe" -m pip install --upgrade pip -q 2>&1 | Out-Null
-& "$VenvDir\Scripts\python.exe" -m pip install -r $Requirements -q
+& $VenvPython -m pip install --upgrade pip -q 2>&1 | Out-Null
+& $VenvPython -m pip install -r $Requirements -q
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to install dependencies"
     exit 1
