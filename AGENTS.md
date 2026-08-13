@@ -17,10 +17,16 @@ with a React dashboard frontend.
 api/                    FastAPI backend
   __init__.py           __version__ via git describe + _FALLBACK_VERSION
   main.py               App & route definitions, verify_api_key dependency, lifespan
+  cli/                  CLI package (nexus-API command)
+    __init__.py          argparse entry point + command dispatch
+    http_client.py       Nexus + ESP HTTP helpers (httpx)
+    commands.py          config, wol, health, poweroff, sleep handlers
+    nexus_tui.py         Textual TUI for Nexus telemetry
+    esp_tui.py           Textual TUI for ESP status + plotext charts
   config/
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
-    runtime.py           APP_NAME, PORT, DEBUG, API_KEY, DUCKDNS_DOMAIN, DUCKDNS_TOKEN
+    runtime.py           APP_NAME, PORT, DEBUG, API_KEY, DUCKDNS_*, NEXUS_*, ESP_*
   hw/
     telemetry.py        Real hardware metrics: psutil + NVML + AMD SMI + hwmon + power_supply
     power.py            systemctl poweroff / suspend wrappers
@@ -235,6 +241,11 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 | `API_KEY`  | *(empty)*   | Required for `X-API-Key` auth on `/api/v1` routes |
 | `DUCKDNS_DOMAIN` | *(empty)* | DuckDNS subdomain; service disabled when empty |
 | `DUCKDNS_TOKEN` | *(empty)* | DuckDNS API token; service disabled when empty |
+| `NEXUS_IP` | `localhost` | Nexus API server IP for CLI requests |
+| `NEXUS_PORT` | `8000` | Nexus API server port for CLI requests |
+| `ESP_IP` | *(empty)* | ESP32 device IP for WOL and status |
+| `ESP_PORT` | *(empty)* | ESP32 device HTTPS port |
+| `ESP_API_KEY` | *(empty)* | ESP32 API key for `X-API-Key` header |
 
 ## CI/CD
 
@@ -268,6 +279,12 @@ Single workflow `docs.yml`:
   sleeps 5 hours. Retries every 5 minutes on failure. State visible
   via `/api/v1/health` (`last_duckdns_update_ms`, `connectivity_delay_ms`).
   Disabled when `DEBUG=true` or `DUCKDNS_DOMAIN`/`DUCKDNS_TOKEN` are unset.
+- **CLI is live** (`api/cli/`): `nexus-API` command with subcommands for
+  config, WOL, telemetry (Textual TUI), health, poweroff, and sleep.
+  WOL/poweroff/sleep are DEBUG-gated. Telemetry TUIs auto-refresh every 2s.
+  Nexus TUI shows CPU/RAM/swap/GPU/sensors. ESP TUI shows network/memory/
+  device/firmware + plotext ASCII charts. Uses `NEXUS_IP`/`NEXUS_PORT` for
+  Nexus API and `ESP_IP`/`ESP_PORT` for ESP32.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.

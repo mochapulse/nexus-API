@@ -17,6 +17,16 @@ DUCKDNS_DOMAIN : str
 DUCKDNS_TOKEN : str
     DuckDNS API token for the account that owns ``DUCKDNS_DOMAIN``,
     default ``""`` (service disabled).
+NEXUS_IP : str
+    Nexus API server IP for CLI requests, default ``"localhost"``.
+NEXUS_PORT : int
+    Nexus API server port for CLI requests, default ``8000``.
+ESP_IP : str
+    ESP32 device IP for WOL and status, default ``""``.
+ESP_PORT : str
+    ESP32 device HTTPS port, default ``""``.
+ESP_API_KEY : str
+    ESP32 API key for ``X-API-Key`` header, default ``""``.
 """
 
 import os
@@ -32,3 +42,8 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
 API_KEY = os.getenv("API_KEY", "")
 DUCKDNS_DOMAIN = os.getenv("DUCKDNS_DOMAIN", "")
 DUCKDNS_TOKEN = os.getenv("DUCKDNS_TOKEN", "")
+NEXUS_IP = os.getenv("NEXUS_IP", "localhost")
+NEXUS_PORT = int(os.getenv("NEXUS_PORT", "8000"))
+ESP_IP = os.getenv("ESP_IP", "")
+ESP_PORT = os.getenv("ESP_PORT", "")
+ESP_API_KEY = os.getenv("ESP_API_KEY", "")

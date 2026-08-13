@@ -151,6 +151,11 @@ Edit `api/.env` to adjust settings:
 | `API_KEY` | *(empty)*   | Shared secret for `X-API-Key` header; **required in production** |
 | `DUCKDNS_DOMAIN` | *(empty)* | DuckDNS subdomain (e.g. `"nexus-coffee"`); **service disabled when empty** |
 | `DUCKDNS_TOKEN` | *(empty)* | DuckDNS API token; **service disabled when empty** |
+| `NEXUS_IP` | `localhost` | Nexus API server IP for CLI requests |
+| `NEXUS_PORT` | `8000` | Nexus API server port for CLI requests |
+| `ESP_IP` | *(empty)* | ESP32 device IP for WOL and status |
+| `ESP_PORT` | *(empty)* | ESP32 device HTTPS port |
+| `ESP_API_KEY` | *(empty)* | ESP32 API key for `X-API-Key` header |
 
 > **Authentication**: every `/api/v1` endpoint requires an `X-API-Key`
 > header matching `API_KEY`. The docs (`/docs`, `/redoc`, `/openapi.json`)
@@ -263,6 +268,43 @@ pnpm build
 ```
 
 Output goes to `frontend/dist/`.
+
+## CLI
+
+The `nexus-API` command-line interface provides direct access to the Nexus
+API and ESP32 device without needing curl or a browser.
+
+```bash
+python -m api.cli <command> [args]
+```
+
+| Command | Description | Target |
+|---------|-------------|--------|
+| `config` | Open `.env` in VS Code | Local |
+| `wol` | Send WOL packet to ESP32 | ESP (HTTPS) |
+| `health` | Print health status | Nexus API |
+| `telemetry` | Launch TUI dashboard | Nexus API (default) |
+| `telemetry esp` | Launch ESP TUI dashboard | ESP32 (HTTPS) |
+| `poweroff` | Power off server (with confirmation) | Nexus API |
+| `sleep` | Put server to sleep (with confirmation) | Nexus API |
+
+### Telemetry TUI
+
+The telemetry command launches a full-screen Textual dashboard:
+
+- **Nexus** (`telemetry` or `telemetry nexus`): CPU per-core bars, RAM/Swap
+  progress bars, GPU cards (usage, VRAM, temperature), power sensors, and
+  power supply status.
+- **ESP** (`telemetry esp`): Network info, memory gauges, device details,
+  firmware info, and ASCII time-series charts (heap, RSSI, tasks, stack)
+  rendered via plotext.
+
+Press `q` to quit.
+
+### DEBUG gating
+
+`wol`, `poweroff`, and `sleep` are blocked when `DEBUG=true` to prevent
+accidental actions during development.
 
 ## Releases
 
