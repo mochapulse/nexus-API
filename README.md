@@ -15,23 +15,33 @@ and a React + TypeScript + Vite frontend.
   `{"poweroff_triggered": "true"}` / `{"sleep_triggered": "true"}`. Gated by
   `DEBUG` — in dev mode the endpoints return stub templates instead of
   executing real commands.
+- **DuckDNS dynamic DNS**: Background service (`api/net/duckdns_service.py`)
+  automatically updates a DuckDNS subdomain with the host's public IP.
+  Runs as a lifespan-managed asyncio task in production — waits for
+  connectivity, updates, then sleeps 5 hours. Retries every 5 minutes
+  on failure. State visible via `/api/v1/health` (`last_duckdns_update_ms`,
+  `connectivity_delay_ms`). Disabled when `DEBUG=true`.
 - **Frontend**: The React app (`App.tsx`) is a scaffold — no UI, no dashboard,
   no API integration.
-- **Tests**: 26 pytest tests in `api/test/` (auth matrix, health, telemetry
-  shape, power DEBUG-gating).
+- **Tests**: 48 pytest tests in `api/test/` (auth matrix, health, telemetry
+  shape, power DEBUG-gating, DuckDNS utils and service).
 
 ## Architecture
 
 ```
 nexus-API/
 ├── api/                 # FastAPI backend
-│   ├── main.py          # App entrypoint, route definitions
+│   ├── main.py          # App entrypoint, route definitions, lifespan
 │   ├── config/          # Runtime settings (dotenv) & paths
 │   ├── hw/              # Hardware interfaces (telemetry, power)
 │   │   ├── telemetry.py # psutil + NVML + AMD SMI metrics collector
 │   │   └── power.py     # systemctl poweroff / suspend wrappers
+│   ├── net/             # Network utilities (DuckDNS dynamic DNS)
+│   │   ├── utils.py     # Async IP detection + DuckDNS updater
+│   │   ├── state.py     # Shared metrics for /health endpoint
+│   │   └── duckdns_service.py  # Background update loop
 │   ├── lib/             # Helpers (JSONC template loader)
-│   └── test/            # pytest suite (auth, health, telemetry, power)
+│   └── test/            # pytest suite (auth, health, telemetry, power, duckdns)
 ├── conftest.py          # Shared pytest fixtures
 ├── daemon/              # Systemd unit for production deployment
 │   └── nexus-api.service
@@ -53,7 +63,7 @@ All business routes live under the versioned `/api/v1` prefix. The root
 |--------|------------------------------|---------------------------------------|-------------------|
 | GET    | `/`                          | Redirect to Swagger UI (`/docs`)      | —                 |
 | GET    | `/api/v1/`                   | Redirect to Swagger UI (`/docs`)      | —                 |
-| GET    | `/api/v1/health`             | Liveness probe (version, uptime)      | computed live    |
+| GET    | `/api/v1/health`             | Liveness probe (version, uptime, DuckDNS state) | computed live |
 | POST   | `/api/v1/power/poweroff`     | Initiate system poweroff              | `api/hw/power.py` |
 | POST   | `/api/v1/power/sleep`        | Initiate system sleep                 | `api/hw/power.py` |
 | GET    | `/api/v1/telemetry`          | Live CPU, RAM, swap, GPU metrics      | `api/hw/telemetry.py` |
@@ -117,10 +127,10 @@ python -m pytest        # full suite
 python -m pytest -q     # summary only
 ```
 
-The 26 tests in `api/test/` cover the auth matrix (X-API-Key), health
-payload, telemetry shape, and the DEBUG-gating of the power endpoints.
-`systemctl` is always mocked — the suite can never power off or suspend
-the host.
+The 48 tests in `api/test/` cover the auth matrix (X-API-Key), health
+payload, telemetry shape, the DEBUG-gating of the power endpoints, and
+the DuckDNS utilities and background service. `systemctl` is always
+mocked — the suite can never power off or suspend the host.
 
 **Environment configuration:**
 
@@ -139,6 +149,8 @@ Edit `api/.env` to adjust settings:
 | `PORT`    | `8000`      | Server listen port               |
 | `DEBUG`   | `True`      | Hot-reload, verbose logging      |
 | `API_KEY` | *(empty)*   | Shared secret for `X-API-Key` header; **required in production** |
+| `DUCKDNS_DOMAIN` | *(empty)* | DuckDNS subdomain (e.g. `"nexus-coffee"`); **service disabled when empty** |
+| `DUCKDNS_TOKEN` | *(empty)* | DuckDNS API token; **service disabled when empty** |
 
 > **Authentication**: every `/api/v1` endpoint requires an `X-API-Key`
 > header matching `API_KEY`. The docs (`/docs`, `/redoc`, `/openapi.json`)
@@ -171,7 +183,7 @@ curl -i http://localhost:8000/        # 307 → /docs (Swagger UI) — public
 
 # All /api/v1 endpoints need the key from api/.env:
 curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/health
-# {"status":"ok","version":"0.2.0","uptime_seconds":655,"timestamp":1718800000}
+# {"status":"ok","version":"0.2.2","uptime_seconds":655,"timestamp":1718800000,"last_duckdns_update_ms":null,"connectivity_delay_ms":null}
 
 curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/v1/telemetry
 # {"uptime_seconds":655,"cpu":{"overall_usage_percent":8.9,...},...}
@@ -225,7 +237,7 @@ systemctl status nexus-api                        # active (running)
 
 # Health must report the new version (port from api/.env on the server)
 curl -H "X-API-Key: <API_KEY>" http://localhost:47102/api/v1/health
-# {"status":"ok","version":"0.2.0", ...}
+# {"status":"ok","version":"0.2.2", ...}
 
 journalctl -u nexus-api -n 20                      # startup log has no errors
 ```

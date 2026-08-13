@@ -16,14 +16,18 @@ with a React dashboard frontend.
 ```
 api/                    FastAPI backend
   __init__.py           __version__ via git describe + _FALLBACK_VERSION
-  main.py               App & route definitions, verify_api_key dependency
+  main.py               App & route definitions, verify_api_key dependency, lifespan
   config/
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
-    runtime.py           APP_NAME, PORT, DEBUG, API_KEY from dotenv
+    runtime.py           APP_NAME, PORT, DEBUG, API_KEY, DUCKDNS_DOMAIN, DUCKDNS_TOKEN
   hw/
     telemetry.py        Real hardware metrics: psutil + NVML + AMD SMI + hwmon + power_supply
     power.py            systemctl poweroff / suspend wrappers
+  net/
+    utils.py            Async IP detection + DuckDNS updater (httpx)
+    state.py            Shared metrics for /health (last_duckdns_update_ms, connectivity_delay_ms)
+    duckdns_service.py  Background update loop (lifespan-managed)
   lib/
     templates.py         load_template(name) — reads JSONC, strips comments, returns dict
   test/
@@ -31,6 +35,7 @@ api/                    FastAPI backend
     test_health.py       Liveness payload, no-store, monotonic uptime
     test_telemetry.py    Payload shape, GPU schema
     test_power.py        DEBUG-gating, production paths, error handling
+    test_duckdns.py      DuckDNS utils, service loop, connectivity, state tracking
   .env.example           Committed template (APP_NAME, PORT, DEBUG, API_KEY)
   .env                   Gitignored local config (ensure_dotenv copies from example)
 conftest.py              Root pytest fixtures (client, auth_headers) + sys.path bootstrap
@@ -191,7 +196,8 @@ To add a new endpoint:
 `status`, `version` (derived from the nearest git `v*` tag via
 `git describe`, with a `_FALLBACK_VERSION` constant in `api/__init__.py`
 for non-git deployments), `uptime_seconds` (monotonic clock anchored at
-import), and `timestamp`, with `Cache-Control: no-store`.
+import), `timestamp`, `last_duckdns_update_ms`, and `connectivity_delay_ms`,
+with `Cache-Control: no-store`.
 No hardware, DB, or external calls — the endpoint responding IS the liveness
 signal. Note: it sits behind the `X-API-Key` check like every `/api/v1`
 route, so monitoring probes must send the key.
@@ -227,6 +233,8 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 | `PORT`     | `8000`      | Server listen port           |
 | `DEBUG`    | `True`      | Hot-reload & verbose logging |
 | `API_KEY`  | *(empty)*   | Required for `X-API-Key` auth on `/api/v1` routes |
+| `DUCKDNS_DOMAIN` | *(empty)* | DuckDNS subdomain; service disabled when empty |
+| `DUCKDNS_TOKEN` | *(empty)* | DuckDNS API token; service disabled when empty |
 
 ## CI/CD
 
@@ -253,9 +261,16 @@ Single workflow `docs.yml`:
   templates instead of executing the real commands — accidental shutdowns
   during development are impossible.
   On systemctl failure the endpoints return HTTP 500 with the error detail.
+- **DuckDNS dynamic DNS is live** (`api/net/`): Background service
+  (`api/net/duckdns_service.py`) updates a DuckDNS subdomain with the
+  host's public IP. Runs as a lifespan-managed asyncio task in production.
+  Waits for TCP connectivity to `google.com:443`, updates DuckDNS, then
+  sleeps 5 hours. Retries every 5 minutes on failure. State visible
+  via `/api/v1/health` (`last_duckdns_update_ms`, `connectivity_delay_ms`).
+  Disabled when `DEBUG=true` or `DUCKDNS_DOMAIN`/`DUCKDNS_TOKEN` are unset.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **Tests**: pytest suite in `api/test/` (26 tests: auth matrix, health,
-  telemetry shape, power DEBUG-gating). Frontend tests: none yet.
+- **Tests**: pytest suite in `api/test/` (48 tests: auth matrix, health,
+  telemetry shape, power DEBUG-gating, DuckDNS utils and service). Frontend tests: none yet.
 - **No frontend-backend integration**: Vite config has no proxy to the API.

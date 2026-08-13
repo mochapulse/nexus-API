@@ -12,6 +12,8 @@ class TestHealthEndpoint:
         assert isinstance(body["version"], str) and body["version"]
         assert isinstance(body["uptime_seconds"], int)
         assert isinstance(body["timestamp"], int)
+        assert "last_duckdns_update_ms" in body
+        assert "connectivity_delay_ms" in body
 
     def test_health_forbids_caching(self, client, auth_headers):
         response = client.get("/api/v1/health", headers=auth_headers)

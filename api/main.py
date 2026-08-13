@@ -13,6 +13,8 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.security import APIKeyHeader
+import asyncio
+from contextlib import asynccontextmanager
 import psutil
 import time
 
@@ -21,10 +23,35 @@ from api.config.paths import FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
 from api.hw.telemetry import get_system_metrics
 from api.hw.power import system_poweroff, system_sleep
+from api.net import state
+from api.net.duckdns_service import duckdns_loop
 
 ensure_dotenv()
 
 import api.config.runtime as runtime
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan — start and stop background services.
+
+    On startup, launches the DuckDNS background updater as a single
+    asyncio task when all three conditions are met: ``DEBUG`` is off,
+    ``DUCKDNS_DOMAIN`` is set, and ``DUCKDNS_TOKEN`` is set.  On shutdown
+    the task is cancelled so the process exits cleanly.
+    """
+    task = None
+    if not runtime.DEBUG and runtime.DUCKDNS_DOMAIN and runtime.DUCKDNS_TOKEN:
+        task = asyncio.create_task(
+            duckdns_loop(runtime.DUCKDNS_DOMAIN, runtime.DUCKDNS_TOKEN)
+        )
+    yield
+    if task:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 # Warm up CPU timers
 psutil.cpu_percent(interval=None)
@@ -36,6 +63,7 @@ app = FastAPI(
     title=runtime.APP_NAME,
     version=__version__,
     debug=runtime.DEBUG,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -95,6 +123,8 @@ def get_health(response: Response):
         "version": __version__,
         "uptime_seconds": int(time.monotonic() - _START_TIME),
         "timestamp": int(time.time()),
+        "last_duckdns_update_ms": state.last_duckdns_update_ms,
+        "connectivity_delay_ms": state.connectivity_delay_ms,
     }
 
 
