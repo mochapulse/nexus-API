@@ -250,6 +250,72 @@ class TestSnapshot:
         result = watchdog.snapshot(state, now=100.0)
         assert result["last_disarm_reason"] == "mc_unrecoverable"
 
+    def test_metadata_null_when_no_probe(self):
+        state = watchdog.WatchdogState()
+        result = watchdog.snapshot(state, now=100.0)
+        assert result["players_max"] is None
+        assert result["mc_version"] is None
+        assert result["mc_motd"] is None
+        assert result["mc_latency_ms"] is None
+
+    def test_metadata_reported_when_online(self):
+        state = _armed_state(last_probe=_online(4))
+        result = watchdog.snapshot(state, now=100.0)
+        assert result["players_max"] == 20
+        assert result["mc_version"] == "1.20.1"
+        assert result["mc_motd"] == "Create Chronicles"
+        assert result["mc_latency_ms"] == 12.3
+
+    def test_metadata_null_when_unreachable(self):
+        state = _armed_state(last_probe=_offline())
+        result = watchdog.snapshot(state, now=100.0)
+        assert result["players_max"] is None
+        assert result["mc_version"] is None
+        assert result["mc_motd"] is None
+        assert result["mc_latency_ms"] is None
+
+
+class TestSnapshotExplicitProbe:
+    """``snapshot(state, now, probe=...)`` — used by the live GET status
+    probe, which must never touch ``state.last_probe`` (that field is
+    owned exclusively by :func:`watchdog.tick`).
+    """
+
+    def test_explicit_probe_overrides_stale_last_probe(self):
+        # Disarmed state with a stale last_probe from a prior armed window;
+        # an explicit live probe must win.
+        state = watchdog.WatchdogState(last_probe=_offline())
+        result = watchdog.snapshot(state, now=100.0, probe=_online(2))
+        assert result["mc_reachable"] is True
+        assert result["players_online"] == 2
+        assert result["players_max"] == 20
+        assert result["mc_version"] == "1.20.1"
+
+    def test_explicit_unreachable_probe_reports_unreachable(self):
+        state = watchdog.WatchdogState(last_probe=_online(2))
+        result = watchdog.snapshot(state, now=100.0, probe=_offline())
+        assert result["mc_reachable"] is False
+        assert result["players_online"] is None
+        assert result["players_max"] is None
+        assert result["mc_version"] is None
+
+    def test_explicit_probe_none_falls_back_to_last_probe(self):
+        state = _armed_state(last_probe=_online(5))
+        result = watchdog.snapshot(state, now=100.0, probe=None)
+        assert result["mc_reachable"] is True
+        assert result["players_online"] == 5
+
+    def test_explicit_probe_does_not_mutate_state(self):
+        state = watchdog.WatchdogState(last_probe=None)
+        watchdog.snapshot(state, now=100.0, probe=_online(1))
+        assert state.last_probe is None
+
+    def test_explicit_probe_empty_seconds_still_from_state_empty_since(self):
+        state = _armed_state(empty_since=40.0)
+        result = watchdog.snapshot(state, now=100.0, probe=_online(0))
+        assert result["players_online"] == 0
+        assert result["empty_seconds"] == 60
+
 
 @pytest.fixture(autouse=True)
 def _reset_global_state():

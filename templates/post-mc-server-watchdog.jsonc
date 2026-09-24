@@ -4,7 +4,8 @@
 //               this exact stub payload is returned and STATE is never touched.
 // Production  : watchdog.arm(STATE, ...) then the live snapshot() payload,
 //               freshly armed — no probe has run yet, so mc_reachable is
-//               false and players_online/empty_seconds are null.
+//               false and players_online/players_max/mc_version/mc_motd/
+//               mc_latency_ms/empty_seconds are all null.
 // last_disarm_reason values: null | "manual" | "expired" | "mc_unrecoverable" |
 //   "poweroff_failed" (systemctl poweroff itself failed, e.g. missing polkit rule)
 {
@@ -14,6 +15,10 @@
   "threshold_seconds": 1800,
   "empty_seconds": null,
   "players_online": null,
+  "players_max": null,
+  "mc_version": null,
+  "mc_motd": null,
+  "mc_latency_ms": null,
   "mc_reachable": false,
   "restarts_used": 0,
   "max_restarts": 3,

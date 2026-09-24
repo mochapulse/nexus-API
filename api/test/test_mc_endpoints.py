@@ -8,7 +8,7 @@ this suite never starts a real polling task, probes a socket, or calls
 systemctl.
 """
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,7 +17,32 @@ import api.config.runtime as runtime
 from api import main
 from api.lib.templates import load_template
 from api.mc import watchdog as mc_watchdog
+from api.mc.slp import McStatus
 from api.mc.watchdog import WatchdogState
+
+
+def _online(players: int) -> McStatus:
+    return McStatus(
+        online=True,
+        players_online=players,
+        players_max=20,
+        version="1.20.1",
+        motd="Create Chronicles",
+        latency_ms=12.3,
+        error=None,
+    )
+
+
+def _offline() -> McStatus:
+    return McStatus(
+        online=False,
+        players_online=None,
+        players_max=None,
+        version=None,
+        motd=None,
+        latency_ms=None,
+        error="connection refused",
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -47,12 +72,58 @@ class TestGetWatchdogEndpoint:
         monkeypatch.setattr(runtime, "DEBUG", False)
         mc_watchdog.arm(mc_watchdog.STATE, now=0.0, active_seconds=100, threshold_seconds=30)
 
-        response = client.get("/api/v1/mc-server/watchdog", headers=auth_headers)
+        with patch.object(main.slp, "probe", new=AsyncMock(return_value=_offline())):
+            response = client.get("/api/v1/mc-server/watchdog", headers=auth_headers)
 
         assert response.status_code == 200
         body = response.json()
         assert body["armed"] is True
         assert body["threshold_seconds"] == 30
+
+    def test_production_probes_live_while_disarmed(self, client, auth_headers, monkeypatch):
+        # Disarmed watchdog, but Minecraft is actually online: the GET
+        # endpoint must probe live rather than reading the (never-set)
+        # state.last_probe, which would falsely report unreachable.
+        monkeypatch.setattr(runtime, "DEBUG", False)
+        probe = AsyncMock(return_value=_online(3))
+
+        with patch.object(main.slp, "probe", new=probe):
+            response = client.get("/api/v1/mc-server/watchdog", headers=auth_headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["armed"] is False
+        assert body["mc_reachable"] is True
+        assert body["players_online"] == 3
+        assert body["players_max"] == 20
+        assert body["mc_version"] == "1.20.1"
+        assert body["mc_motd"] == "Create Chronicles"
+        assert body["mc_latency_ms"] == 12.3
+        probe.assert_awaited_once_with("localhost", runtime.MINECRAFT_PORT)
+        assert mc_watchdog.STATE.last_probe is None
+
+    def test_production_probes_live_and_reports_offline(self, client, auth_headers, monkeypatch):
+        monkeypatch.setattr(runtime, "DEBUG", False)
+
+        with patch.object(main.slp, "probe", new=AsyncMock(return_value=_offline())):
+            response = client.get("/api/v1/mc-server/watchdog", headers=auth_headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["mc_reachable"] is False
+        assert body["players_online"] is None
+        assert body["players_max"] is None
+        assert body["mc_version"] is None
+
+    def test_debug_never_probes(self, client, auth_headers, monkeypatch):
+        monkeypatch.setattr(runtime, "DEBUG", True)
+        probe = AsyncMock(return_value=_online(1))
+
+        with patch.object(main.slp, "probe", new=probe):
+            response = client.get("/api/v1/mc-server/watchdog", headers=auth_headers)
+
+        assert response.status_code == 200
+        probe.assert_not_called()
 
 
 class TestPostWatchdogEndpoint:
