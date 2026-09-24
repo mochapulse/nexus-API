@@ -13,7 +13,9 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.security import APIKeyHeader
+from pydantic import BaseModel, Field
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 import psutil
 import time
@@ -23,12 +25,16 @@ from api.config.paths import FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
 from api.hw.telemetry import get_system_metrics
 from api.hw.power import system_poweroff, system_sleep
+from api.mc import watchdog as mc_watchdog
+from api.mc.watchdog import watchdog_loop
 from api.net import state
 from api.net.duckdns_service import duckdns_loop
 
 ensure_dotenv()
 
 import api.config.runtime as runtime
+
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -37,17 +43,34 @@ async def lifespan(app: FastAPI):
 
     On startup, launches the DuckDNS background updater as a single
     asyncio task when all three conditions are met: ``DEBUG`` is off,
-    ``DUCKDNS_DOMAIN`` is set, and ``DUCKDNS_TOKEN`` is set.  On shutdown
-    the task is cancelled so the process exits cleanly.
+    ``DUCKDNS_DOMAIN`` is set, and ``DUCKDNS_TOKEN`` is set. Also
+    launches the Minecraft watchdog polling loop (:func:`watchdog_loop`)
+    whenever ``DEBUG`` is off — the loop itself only probes/acts while
+    the watchdog is armed via the ``/api/v1/mc-server/watchdog``
+    endpoints, and it starts disarmed every boot (in-memory state). In
+    ``DEBUG`` the watchdog loop is never started, matching the power
+    endpoints' DEBUG-gating. On shutdown every started task is
+    cancelled so the process exits cleanly.
     """
-    task = None
+    tasks: list[asyncio.Task] = []
     if not runtime.DEBUG and runtime.DUCKDNS_DOMAIN and runtime.DUCKDNS_TOKEN:
-        task = asyncio.create_task(
-            duckdns_loop(runtime.DUCKDNS_DOMAIN, runtime.DUCKDNS_TOKEN)
+        tasks.append(
+            asyncio.create_task(
+                duckdns_loop(runtime.DUCKDNS_DOMAIN, runtime.DUCKDNS_TOKEN)
+            )
         )
+    if not runtime.DEBUG:
+        tasks.append(
+            asyncio.create_task(
+                watchdog_loop("localhost", runtime.MINECRAFT_PORT, runtime.MINECRAFT_SERVICE)
+            )
+        )
+    else:
+        log.info("DEBUG is on; Minecraft watchdog loop is disabled")
     yield
-    if task:
+    for task in tasks:
         task.cancel()
+    for task in tasks:
         try:
             await task
         except asyncio.CancelledError:
@@ -160,6 +183,56 @@ def post_sleep():
     if error:
         return JSONResponse(status_code=500, content={"status": "error", "detail": error})
     return {"sleep_triggered": "true"}
+
+
+class WatchdogArmRequest(BaseModel):
+    """Body for ``POST /api/v1/mc-server/watchdog``.
+
+    ``active_seconds`` is how long the watchdog stays armed (capped at
+    one week). ``threshold_seconds`` is how long Minecraft must be
+    reachable with zero players before the watchdog powers off the
+    host, defaulting to :data:`~api.mc.watchdog.DEFAULT_THRESHOLD`
+    (30 minutes) and capped at one day.
+    """
+
+    active_seconds: int = Field(gt=0, le=7 * 24 * 3600)
+    threshold_seconds: int = Field(default=mc_watchdog.DEFAULT_THRESHOLD, gt=0, le=24 * 3600)
+
+
+@api_v1_router.post("/mc-server/watchdog")
+def post_mc_server_watchdog(body: WatchdogArmRequest):
+    """Arm (or re-arm) the Minecraft server watchdog. Returns the status
+    payload. ``DEBUG`` still validates the body but returns a stub
+    template and never touches the watchdog state.
+    """
+    if runtime.DEBUG:
+        return load_template("post-mc-server-watchdog")
+    mc_watchdog.arm(
+        mc_watchdog.STATE, time.monotonic(), body.active_seconds, body.threshold_seconds
+    )
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+
+
+@api_v1_router.delete("/mc-server/watchdog")
+def delete_mc_server_watchdog():
+    """Disarm the Minecraft server watchdog (idempotent). ``DEBUG``
+    returns a stub template and never touches the watchdog state.
+    """
+    if runtime.DEBUG:
+        return load_template("delete-mc-server-watchdog")
+    mc_watchdog.disarm(mc_watchdog.STATE, "manual")
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+
+
+@api_v1_router.get("/mc-server/watchdog")
+def get_mc_server_watchdog():
+    """Return the current watchdog status; see
+    :func:`api.mc.watchdog.snapshot` for the payload shape. ``DEBUG``
+    returns a stub template and never touches the watchdog state.
+    """
+    if runtime.DEBUG:
+        return load_template("get-mc-server-watchdog")
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
 
 
 @api_v1_router.get("/telemetry")

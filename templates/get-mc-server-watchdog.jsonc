@@ -1,0 +1,17 @@
+// REAL RESPONSE EXAMPLE — GET /api/v1/mc-server/watchdog
+// DEBUG=true  : this exact payload is returned (stub); STATE is never read.
+// Production  : the live watchdog.snapshot(STATE, now) payload, same shape.
+// last_disarm_reason values: null | "manual" | "expired" | "mc_unrecoverable" |
+//   "poweroff_failed" (systemctl poweroff itself failed, e.g. missing polkit rule)
+{
+  "armed": true,
+  "deadline": "2026-09-23T23:00:00Z",
+  "remaining_seconds": 17820,
+  "threshold_seconds": 1800,
+  "empty_seconds": 120,
+  "players_online": 0,
+  "mc_reachable": true,
+  "restarts_used": 0,
+  "max_restarts": 3,
+  "last_disarm_reason": null
+}

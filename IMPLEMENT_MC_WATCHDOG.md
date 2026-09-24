@@ -156,7 +156,7 @@ Status payload:
   "mc_reachable": true,
   "restarts_used": 0,
   "max_restarts": 3,
-  "last_disarm_reason": null   // "manual" | "expired" | "mc_unrecoverable"
+  "last_disarm_reason": null   // "manual" | "expired" | "mc_unrecoverable" | "poweroff_failed"
 }
 ```
 
@@ -240,4 +240,5 @@ _None — all resolved._
 - **Q6 Grace and cap**: 5m startup grace, max 3 restarts. After the 3rd failed restart, disarm (`mc_unrecoverable`), never poweroff.
 - **Q7 Unit file**: fixed manually on nexus-lan (dedicated tmux socket, ExecStop waits for the save, TimeoutStopSec=120, Restart=on-failure kept). Verified: main PID = `tmux -L mc-server-create` server, Java in the unit cgroup.
 - **Q5 DEBUG**: placeholders everywhere; the CLI sends no request, and the server loop never runs.
+- **`last_disarm_reason: "poweroff_failed"`** (added in T3/T4, not in the original design): when `systemctl poweroff` itself reports an error (e.g. missing polkit rule), the watchdog disarms and records this reason instead of leaving itself armed to silently retry (and re-fail) the poweroff every 30s tick with no way to surface the failure via `status`.
 - **Probe uses mcstatus (user request) instead of hand-written SLP**: `api/mc/slp.py` now wraps `mcstatus.JavaServer.async_status()` instead of implementing the Java Edition Server List Ping wire protocol by hand. Same `McStatus`/`probe()` contract; `probe()` is now a coroutine (`async def`), so `watchdog_loop()` awaits it directly instead of via `asyncio.to_thread`.
