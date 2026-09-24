@@ -280,6 +280,15 @@ with no poweroff. The decision logic is the pure function
 `tick(state, now, probe_result, unit_state) -> Action`, so tests never
 sleep, probe a real socket, or call `systemctl`.
 
+No lock guards the watchdog's in-memory state: the process runs a single
+asyncio event loop, so any span of code with no `await` in it (arm/disarm/
+snapshot/tick, and the HTTP handlers that call them) is already atomic
+with respect to every other coroutine. The one real race — the polling
+loop's blocking probe/restart/poweroff calls, which do cross an `await`
+— is guarded by re-checking `arm_generation` (bumped on every arm) on
+the other side, so a disarm/re-arm that races an in-flight call is
+discarded instead of applied.
+
 `api/lib/durations.py` (`parse_duration`/`format_duration`, stdlib-only) is
 shared by the CLI, which parses user input before sending it, and the API,
 which validates it again server-side. Restarting the `mc-server-create`
