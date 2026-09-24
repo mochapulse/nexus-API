@@ -4,13 +4,6 @@ Accepts compact human-friendly duration strings such as ``5h``, ``30m``,
 or ``1h-30m`` and converts them to seconds, and vice versa. Shared by the
 CLI (which parses user input before sending it to the API) and the server
 (which validates it again, since client input is never trusted).
-
-Functions
----------
-parse_duration(text)
-    Parse a duration string into a whole number of seconds.
-format_duration(seconds)
-    Format a number of seconds into a compact human-readable string.
 """
 
 import re
@@ -29,21 +22,15 @@ def parse_duration(text: str) -> int:
     between the hour and minute parts (e.g. not as a leading or trailing
     character).
 
-    Parameters
-    ----------
-    text : str
-        The duration string to parse.
+    Args:
+        text: The duration string to parse.
 
-    Returns
-    -------
-    int
+    Returns:
         The parsed duration in seconds.
 
-    Raises
-    ------
-    ValueError
-        If ``text`` does not match a valid duration format, or the parsed
-        total is zero.
+    Raises:
+        ValueError: If ``text`` does not match a valid duration format, or
+            the parsed total is zero.
     """
     cleaned = text.strip().lower()
     if not cleaned or cleaned == "-":
@@ -89,14 +76,10 @@ def format_duration(seconds: int) -> str:
     Examples: ``5400`` -> ``"1h 30m"``, ``90`` -> ``"1m 30s"``, ``45`` ->
     ``"45s"``.
 
-    Parameters
-    ----------
-    seconds : int
-        The duration in seconds. Expected to be non-negative.
+    Args:
+        seconds: The duration in seconds. Expected to be non-negative.
 
-    Returns
-    -------
-    str
+    Returns:
         The formatted duration, using the two largest non-zero units
         (hours, minutes, seconds). Zero seconds formats as ``"0s"``.
     """
