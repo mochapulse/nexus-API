@@ -1,0 +1,45 @@
+# Minecraft server (Create Chronicles) managed by systemd.
+#
+# Reference copy of the production unit on the Nexus host. The Nexus API
+# MC watchdog restarts this unit (MINECRAFT_SERVICE=mc-server-create) when
+# the server stops answering Server List Ping.
+#
+# Install manually (not handled by cmd/install.sh):
+#   1. Replace __USER__ and __MC_SERVER_DIR__ (directory holding start.sh).
+#   2. sudo cp daemon/mc-server-create.service /etc/systemd/system/
+#   3. sudo systemctl daemon-reload && sudo systemctl enable --now mc-server-create
+#
+# Console:
+#   tmux -L mc-server-create attach -t mc-server-create   (detach: Ctrl+B, D)
+#
+# Design notes:
+#   - Dedicated tmux socket (-L): the session never shares a tmux server with
+#     interactive SSH sessions, so the unit goes inactive when Java exits.
+#   - ExecStop sends "stop" and waits for the session to end, so the world
+#     save completes before systemd kills the cgroup (bounded by
+#     TimeoutStopSec).
+#   - Restart=on-failure rarely fires: tmux exits 0 when Java dies. While
+#     armed, the Nexus API watchdog covers that gap.
+
+[Unit]
+Description=Servidor de Minecraft (Create Chronicles) - mc-server-create
+After=network.target
+
+[Service]
+Type=forking
+User=__USER__
+Group=__USER__
+WorkingDirectory=__MC_SERVER_DIR__
+
+# Dedicated tmux socket: never shares a tmux server with SSH sessions
+ExecStart=/usr/bin/tmux -L mc-server-create new-session -d -s mc-server-create './start.sh'
+
+# Send "stop" and wait until the session ends (world saved)
+ExecStop=/bin/sh -c '/usr/bin/tmux -L mc-server-create send-keys -t mc-server-create "stop" ENTER; while /usr/bin/tmux -L mc-server-create has-session -t mc-server-create 2>/dev/null; do sleep 1; done'
+
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

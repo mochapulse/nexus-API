@@ -1,0 +1,71 @@
+# Feature: mc-server-watchdog
+
+Design reference: [`IMPLEMENT_MC_WATCHDOG.md`](../../IMPLEMENT_MC_WATCHDOG.md) (all questions resolved).
+
+## Objective
+
+`nexus-API mc-server active <D> [threshold <T>] | disable | status`. A server-side
+watchdog powers off the Nexus host when Minecraft is reachable with 0 players for
+T (default 30m), restarts MC when it is unreachable (5m grace, max 3 restarts,
+then disarm without poweroff), and disarms when the window D expires. The state
+lives in memory only, so the watchdog is always disarmed after boot.
+
+## Constraints
+
+- DEBUG: the server returns templates and never starts the loop; the CLI sends no request and prints an inline placeholder (the CLI deps have no orjson).
+- An unreachable MC never counts as empty and never causes a poweroff.
+- Tests never call real `systemctl` or sockets; the decision logic is a pure `tick()`.
+- Polkit rule scoped to `mc-server-create.service`, verbs `start`/`restart` only.
+- Follow repo conventions: lifespan guard+cancel (main.py:34-54), `logging.getLogger(__name__)` with % formatting, pytest `asyncio_mode=auto`, templates `{method}-{name}.jsonc`, docs/api.rst automodule blocks.
+- Branch `feat/mc-server-watchdog`; one Conventional Commit per task, no AI attribution; push/PR are the user's decision.
+
+## Workflow Settings
+
+- Route: ODD (SDD declined 2026-09-23: native store resolver only supports openspec; user chose to stay on Engram).
+- TDD: **off** (source: sdd-init detection, no project TDD config). Runner: `python -m pytest` (repo root, venv).
+- RDD: off (global) → no native review.
+- Delivery: `auto-chain` (user: "split commits in PR is ok"). Chain strategy: `feature-branch-chain`.
+  - Tracker: `feat/mc-server-watchdog` (draft/no-merge PR to `main`, created only when the user decides to push).
+  - PR1 `feat/mc-watchdog-01-foundation` → tracker (T0, T1, T2)
+  - PR2 `feat/mc-watchdog-02-logic` → PR1 branch (T3)
+  - PR3 `feat/mc-watchdog-03-api` → PR2 branch (T4)
+  - PR4 `feat/mc-watchdog-04-cli` → PR3 branch (T5, T6)
+- Forecast: ~1200 authored changed lines.
+
+## Tasks
+
+| ID | Task | Route | Slice |
+|----|------|-------|-------|
+| T0 | Commit design doc + `daemon/mc-server-create.service` | inline (2 mechanical, already-written files) | PR1 |
+| T1 | `api/lib/durations.py` + tests | delegated writer | PR1 |
+| T2 | `api/mc/slp.py`, `api/mc/service.py` + tests | delegated writer | PR1 |
+| T3 | `api/mc/watchdog.py` (state, `tick()`, loop) + tests | delegated writer | PR2 |
+| T4 | API endpoints + lifespan, runtime config, `.env.example`, templates, polkit in `install.sh` + tests | delegated writer | PR3 |
+| T5 | CLI `mc-server`, dispatch refactor, `nexus_delete` + tests | delegated writer | PR4 |
+| T6 | AGENTS.md, README, docs/api.rst | delegated writer | PR4 |
+
+Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trigger.
+
+## Checklist
+
+- [ ] T0
+- [ ] T1
+- [ ] T2
+- [ ] T3
+- [ ] T4
+- [ ] T5
+- [ ] T6
+
+## Acceptance Criteria
+
+- `python -m pytest` passes (existing 48 tests + new ones).
+- `sphinx-build -b html docs/ docs/_build/html -W` passes.
+- Manual on nexus-lan: arm/status/disable via CLI; poweroff after the threshold with an empty server; restart after MC is killed.
+
+## Progress / Evidence
+
+_(commit IDs and check results per task)_
+
+## Next Step
+
+T0 commit on `feat/mc-watchdog-01-foundation`, then T1-T2 (delegated writer).
