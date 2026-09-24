@@ -10,63 +10,29 @@ import re
 
 
 _DURATION_RE = re.compile(r"^(?:(\d+)h)?-?(?:(\d+)m)?$")
+_USAGE = "use formats like 5h, 30m, 1h-30m"
 
 
 def parse_duration(text: str) -> int:
-    """Parse a compact duration string into seconds.
-
-    Accepted formats: ``5h``, ``10h``, ``1h``, ``30m``, ``1m``, ``1h-30m``,
-    ``1h30m``. Matching is case-insensitive and surrounding whitespace is
-    stripped. At least one of the hour/minute parts must be present and the
-    total duration must be greater than zero. A dash is only accepted
-    between the hour and minute parts (e.g. not as a leading or trailing
-    character).
-
-    Args:
-        text: The duration string to parse.
-
-    Returns:
-        The parsed duration in seconds.
+    """Parse a compact duration string (``5h``, ``30m``, ``1h-30m``,
+    ``1h30m``) into seconds. Case-insensitive; surrounding whitespace is
+    stripped. A dash is only accepted between the hour and minute parts
+    (not leading/trailing), and the total must be greater than zero.
 
     Raises:
-        ValueError: If ``text`` does not match a valid duration format, or
-            the parsed total is zero.
+        ValueError: If ``text`` is not a valid duration, or totals zero.
     """
     cleaned = text.strip().lower()
-    if not cleaned or cleaned == "-":
-        raise ValueError(
-            f"invalid duration '{text}': use formats like 5h, 30m, 1h-30m"
-        )
+    match = _DURATION_RE.match(cleaned) if cleaned and cleaned != "-" else None
+    hours_raw, minutes_raw = match.groups() if match else (None, None)
+    dangling_dash = "-" in cleaned and (hours_raw is None or minutes_raw is None)
 
-    match = _DURATION_RE.match(cleaned)
-    if not match:
-        raise ValueError(
-            f"invalid duration '{text}': use formats like 5h, 30m, 1h-30m"
-        )
+    if not match or (hours_raw is None and minutes_raw is None) or dangling_dash:
+        raise ValueError(f"invalid duration '{text}': {_USAGE}")
 
-    hours_raw, minutes_raw = match.groups()
-    if hours_raw is None and minutes_raw is None:
-        raise ValueError(
-            f"invalid duration '{text}': use formats like 5h, 30m, 1h-30m"
-        )
-
-    # The dash is only meaningful as a separator between an hour part and a
-    # minute part (e.g. "1h-30m"). Reject a dangling dash such as "1h-" or
-    # "-30m", which the bare regex above would otherwise accept.
-    if "-" in cleaned and (hours_raw is None or minutes_raw is None):
-        raise ValueError(
-            f"invalid duration '{text}': use formats like 5h, 30m, 1h-30m"
-        )
-
-    hours = int(hours_raw) if hours_raw is not None else 0
-    minutes = int(minutes_raw) if minutes_raw is not None else 0
-    total_seconds = hours * 3600 + minutes * 60
-
+    total_seconds = int(hours_raw or 0) * 3600 + int(minutes_raw or 0) * 60
     if total_seconds == 0:
-        raise ValueError(
-            f"invalid duration '{text}': use formats like 5h, 30m, 1h-30m"
-        )
-
+        raise ValueError(f"invalid duration '{text}': {_USAGE}")
     return total_seconds
 
 
