@@ -1,0 +1,1287 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="Nexus API" href="index.html">
+
+    <link rel="shortcut icon" href="_static/favicon.svg"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>API Reference - Nexus API</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Nexus API</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">Nexus API</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">API Reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="https://github.com/mochapulse/nexus-API/blob/main/docs/api.rst?plain=true" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div><div class="edit-this-page">
+  <a class="muted-link" href="https://github.com/mochapulse/nexus-API/edit/main/docs/api.rst" rel="edit" title="Edit this page">
+    <svg><use href="#svg-pencil"></use></svg>
+    <span class="visually-hidden">Edit this page</span>
+  </a>
+</div><div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-api">
+<span id="api-reference"></span><h1>API Reference<a class="headerlink" href="#module-api" title="Link to this heading">¶</a></h1>
+<p>Nexus API — FastAPI backend serving health, telemetry, and power management endpoints.</p>
+<p id="module-api.main">Nexus API application entry point.</p>
+<p>A FastAPI server that serves health, telemetry, and power-management
+endpoints.  Health and telemetry are computed live; power endpoints use
+JSONC response templates while DEBUG-gated.  All business routes live
+under the versioned <code class="docutils literal notranslate"><span class="pre">/api/v1</span></code> prefix; the root and the API root redirect
+to the Swagger UI at <code class="docutils literal notranslate"><span class="pre">/docs</span></code>.  Run with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">api</span><span class="o">.</span><span class="n">main</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="api.main.WatchdogArmRequest">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">WatchdogArmRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_seconds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_seconds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1800</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#WatchdogArmRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.WatchdogArmRequest" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Body for <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/v1/mc-server/watchdog</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">active_seconds</span></code> is how long the watchdog stays armed (capped at
+one week). <code class="docutils literal notranslate"><span class="pre">threshold_seconds</span></code> is how long Minecraft must be
+reachable with zero players before the watchdog powers off the
+host, defaulting to <a class="reference internal" href="#api.mc.watchdog.DEFAULT_THRESHOLD" title="api.mc.watchdog.DEFAULT_THRESHOLD"><code class="xref py py-data docutils literal notranslate"><span class="pre">DEFAULT_THRESHOLD</span></code></a>
+(30 minutes) and capped at one day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>active_seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>threshold_seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.main.WatchdogArmRequest.active_seconds">
+<span class="sig-name descname"><span class="pre">active_seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#api.main.WatchdogArmRequest.active_seconds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.main.WatchdogArmRequest.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#api.main.WatchdogArmRequest.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.main.WatchdogArmRequest.threshold_seconds">
+<span class="sig-name descname"><span class="pre">threshold_seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#api.main.WatchdogArmRequest.threshold_seconds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.api_root">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">api_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#api_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.api_root" title="Link to this definition">¶</a></dt>
+<dd><p>Redirect to the Swagger UI (<code class="docutils literal notranslate"><span class="pre">/docs</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.delete_mc_server_watchdog">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">delete_mc_server_watchdog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#delete_mc_server_watchdog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.delete_mc_server_watchdog" title="Link to this definition">¶</a></dt>
+<dd><p>Disarm the Minecraft server watchdog (idempotent). <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>
+returns a stub template and never touches the watchdog state.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.favicon">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">favicon</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#favicon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.favicon" title="Link to this definition">¶</a></dt>
+<dd><p>Serve the Nexus favicon as an SVG.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.get_health">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">get_health</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#get_health"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.get_health" title="Link to this definition">¶</a></dt>
+<dd><p>Liveness probe — confirms the process is alive and serving.</p>
+<p>Dependency-free by design: no hardware, database, or external calls,
+so a dependency blip can never cascade into a false “dead” verdict.
+Returns 200 with the service version, process uptime, and timestamp.
+The response is marked <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-store</span></code> so load balancers
+and proxies never serve a stale “ok”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>response</strong> (<a class="reference external" href="https://fastapi.tiangolo.com/reference/responses/#fastapi.responses.Response" title="(in FastAPI v0.0.0)"><em>Response</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.get_mc_server_watchdog">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">get_mc_server_watchdog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#get_mc_server_watchdog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.get_mc_server_watchdog" title="Link to this definition">¶</a></dt>
+<dd><p>Return the current watchdog status; see
+<a class="reference internal" href="#api.mc.watchdog.snapshot" title="api.mc.watchdog.snapshot"><code class="xref py py-func docutils literal notranslate"><span class="pre">api.mc.watchdog.snapshot()</span></code></a> for the payload shape. Unlike
+POST/DELETE, this performs a live Minecraft probe on every call —
+armed or not — so status reflects reality even while disarmed,
+instead of relying on <code class="docutils literal notranslate"><span class="pre">state.last_probe</span></code>, which the polling loop
+only sets while armed. The live probe never mutates watchdog state.
+<code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> returns a stub template and never touches the watchdog
+state or probes anything.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.get_telemetry">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">get_telemetry</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#get_telemetry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.get_telemetry" title="Link to this definition">¶</a></dt>
+<dd><p>Return live hardware telemetry (CPU, RAM, swap, GPU).</p>
+<p>The payload is pre-serialized by orjson in the metrics worker and
+served as raw bytes with a standard <code class="docutils literal notranslate"><span class="pre">application/json</span></code> media type,
+so no re-serialization occurs on the response path.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.lifespan">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">lifespan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#lifespan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.lifespan" title="Link to this definition">¶</a></dt>
+<dd><p>Application lifespan — start and stop background services.</p>
+<p>On startup, launches the DuckDNS background updater as a single
+asyncio task when all three conditions are met: <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> is off,
+<code class="docutils literal notranslate"><span class="pre">DUCKDNS_DOMAIN</span></code> is set, and <code class="docutils literal notranslate"><span class="pre">DUCKDNS_TOKEN</span></code> is set. Also
+launches the Minecraft watchdog polling loop (<code class="xref py py-func docutils literal notranslate"><span class="pre">watchdog_loop()</span></code>)
+whenever <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> is off — the loop itself only probes/acts while
+the watchdog is armed via the <code class="docutils literal notranslate"><span class="pre">/api/v1/mc-server/watchdog</span></code>
+endpoints, and it starts disarmed every boot (in-memory state). In
+<code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> the watchdog loop is never started, matching the power
+endpoints’ DEBUG-gating. On shutdown every started task is
+cancelled so the process exits cleanly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>app</strong> (<a class="reference external" href="https://fastapi.tiangolo.com/reference/fastapi/#fastapi.FastAPI" title="(in FastAPI v0.0.0)"><em>FastAPI</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.post_mc_server_watchdog">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">post_mc_server_watchdog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#post_mc_server_watchdog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.post_mc_server_watchdog" title="Link to this definition">¶</a></dt>
+<dd><p>Arm (or re-arm) the Minecraft server watchdog. Returns the status
+payload. <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> still validates the body but returns a stub
+template and never touches the watchdog state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>body</strong> (<a class="reference internal" href="#api.main.WatchdogArmRequest" title="api.main.WatchdogArmRequest"><em>WatchdogArmRequest</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.post_poweroff">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">post_poweroff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#post_poweroff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.post_poweroff" title="Link to this definition">¶</a></dt>
+<dd><p>Power off the host system.</p>
+<p>On success the response is <code class="docutils literal notranslate"><span class="pre">{&quot;poweroff_triggered&quot;:</span> <span class="pre">&quot;true&quot;}</span></code>.
+When <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> is enabled, the real command is skipped and a stub
+template is returned instead, so the machine cannot be shut down
+accidentally during development.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.post_sleep">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">post_sleep</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#post_sleep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.post_sleep" title="Link to this definition">¶</a></dt>
+<dd><p>Put the host system into S3 (suspend-to-RAM) sleep.</p>
+<p>On success the response is <code class="docutils literal notranslate"><span class="pre">{&quot;sleep_triggered&quot;:</span> <span class="pre">&quot;true&quot;}</span></code>.
+When <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> is enabled, the real command is skipped and a stub
+template is returned instead, so the machine cannot be suspended
+accidentally during development.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.root">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.root" title="Link to this definition">¶</a></dt>
+<dd><p>Redirect to the Swagger UI (<code class="docutils literal notranslate"><span class="pre">/docs</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.main.verify_api_key">
+<span class="sig-prename descclassname"><span class="pre">api.main.</span></span><span class="sig-name descname"><span class="pre">verify_api_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Depends(dependency=&lt;fastapi.security.api_key.APIKeyHeader</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/main.html#verify_api_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.main.verify_api_key" title="Link to this definition">¶</a></dt>
+<dd><p>Reject requests without a valid <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header.</p>
+<p>Applies to every route on the versioned router (all <code class="docutils literal notranslate"><span class="pre">/api/v1</span></code>
+endpoints).  The docs routes (<code class="docutils literal notranslate"><span class="pre">/docs</span></code>, <code class="docutils literal notranslate"><span class="pre">/redoc</span></code>, <code class="docutils literal notranslate"><span class="pre">/openapi.json</span></code>)
+and the app-level helpers (<code class="docutils literal notranslate"><span class="pre">/</span></code>, <code class="docutils literal notranslate"><span class="pre">/favicon.ico</span></code>) stay public.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">API_KEY</span></code> is not configured the check fails closed in production
+(HTTP 503) and passes silently in DEBUG, so development keeps working
+out of the box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>api_key</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.config">Configuration package — runtime settings, paths, and environment bootstrapping.</p>
+<p id="module-api.config.paths">Filesystem paths and bootstrapping for the Nexus API.</p>
+<section id="constants">
+<h2>Constants<a class="headerlink" href="#constants" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>API_DIR<span class="classifier">pathlib.Path</span></dt><dd><p>Absolute path to the <code class="docutils literal notranslate"><span class="pre">api/</span></code> package directory.</p>
+</dd>
+<dt>PROJECT_DIR<span class="classifier">pathlib.Path</span></dt><dd><p>Absolute path to the repository root (one level above <code class="docutils literal notranslate"><span class="pre">api/</span></code>).</p>
+</dd>
+<dt>DOTENV_PATH<span class="classifier">pathlib.Path</span></dt><dd><p>Path to the <code class="docutils literal notranslate"><span class="pre">.env</span></code> file.  Respects <code class="docutils literal notranslate"><span class="pre">NEXUS_DOTENV_PATH</span></code> env var
+override (used by the CLI workstation deploy alias).</p>
+</dd>
+<dt>FAVICON_PATH<span class="classifier">pathlib.Path</span></dt><dd><p>Path to the favicon SVG served by the FastAPI app.</p>
+</dd>
+<dt>TEMPLATES_DIR<span class="classifier">pathlib.Path</span></dt><dd><p>Path to the <code class="docutils literal notranslate"><span class="pre">templates/</span></code> directory containing JSONC response templates.</p>
+</dd>
+<dt>DB_PATH<span class="classifier">pathlib.Path</span></dt><dd><p>Path to the SQLite3 database file used by the Nexus API.</p>
+</dd>
+</dl>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>ensure_dotenv(base_dir=API_DIR)</dt><dd><p>Copy <code class="docutils literal notranslate"><span class="pre">.env.example</span></code> to <code class="docutils literal notranslate"><span class="pre">.env</span></code> when no <code class="docutils literal notranslate"><span class="pre">.env</span></code> is present.</p>
+</dd>
+</dl>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.config.paths.ensure_dotenv">
+<span class="sig-prename descclassname"><span class="pre">api.config.paths.</span></span><span class="sig-name descname"><span class="pre">ensure_dotenv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/runner/work/nexus-API/nexus-API/api')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/config/paths.html#ensure_dotenv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.config.paths.ensure_dotenv" title="Link to this definition">¶</a></dt>
+<dd><p>Copy <code class="docutils literal notranslate"><span class="pre">.env.example</span></code> to <code class="docutils literal notranslate"><span class="pre">.env</span></code> when no <code class="docutils literal notranslate"><span class="pre">.env</span></code> is present.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>base_dir<span class="classifier">pathlib.Path</span></dt><dd><p>Directory containing the <code class="docutils literal notranslate"><span class="pre">.env</span></code> and <code class="docutils literal notranslate"><span class="pre">.env.example</span></code> files.</p>
+</dd>
+</dl>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>base_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.config.runtime">Runtime configuration loaded from environment variables (<code class="docutils literal notranslate"><span class="pre">python-dotenv</span></code>).</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>APP_NAME<span class="classifier">str</span></dt><dd><p>Application name, default <code class="docutils literal notranslate"><span class="pre">&quot;Nexus</span> <span class="pre">API&quot;</span></code>.</p>
+</dd>
+<dt>PORT<span class="classifier">int</span></dt><dd><p>Server listen port, default <code class="docutils literal notranslate"><span class="pre">8000</span></code>.</p>
+</dd>
+<dt>DEBUG<span class="classifier">bool</span></dt><dd><p>Toggle debug mode (hot-reload, verbose logs), default <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+<dt>API_KEY<span class="classifier">str</span></dt><dd><p>Shared secret required in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header on all <code class="docutils literal notranslate"><span class="pre">/api/v1</span></code>
+routes, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> (unset).</p>
+</dd>
+<dt>DUCKDNS_DOMAIN<span class="classifier">str</span></dt><dd><p>DuckDNS subdomain name for dynamic DNS updates (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;nexus-coffee&quot;</span></code>),
+default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> (service disabled).</p>
+</dd>
+<dt>DUCKDNS_TOKEN<span class="classifier">str</span></dt><dd><p>DuckDNS API token for the account that owns <code class="docutils literal notranslate"><span class="pre">DUCKDNS_DOMAIN</span></code>,
+default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> (service disabled).</p>
+</dd>
+<dt>NEXUS_IP<span class="classifier">str</span></dt><dd><p>Nexus API server IP for CLI requests, default <code class="docutils literal notranslate"><span class="pre">&quot;localhost&quot;</span></code>.</p>
+</dd>
+<dt>NEXUS_PORT<span class="classifier">int</span></dt><dd><p>Nexus API server port for CLI requests, default <code class="docutils literal notranslate"><span class="pre">8000</span></code>.</p>
+</dd>
+<dt>ESP_IP<span class="classifier">str</span></dt><dd><p>ESP32 device IP for WOL and status, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt>ESP_PORT<span class="classifier">str</span></dt><dd><p>ESP32 device HTTPS port, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt>ESP_API_KEY<span class="classifier">str</span></dt><dd><p>ESP32 API key for <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>.</p>
+</dd>
+<dt>MINECRAFT_PORT<span class="classifier">int</span></dt><dd><p>Minecraft server port probed by the watchdog on <code class="docutils literal notranslate"><span class="pre">localhost</span></code>,
+default <code class="docutils literal notranslate"><span class="pre">25565</span></code>.</p>
+</dd>
+<dt>MINECRAFT_SERVICE<span class="classifier">str</span></dt><dd><p>Systemd unit name the watchdog restarts on recovery, default
+<code class="docutils literal notranslate"><span class="pre">&quot;mc-server-create&quot;</span></code>.</p>
+</dd>
+</dl>
+</section>
+<p id="module-api.lib">Library package — reusable helpers and utilities shared across the API layer.</p>
+<p id="module-api.lib.templates">JSONC template loader for API response stubs.</p>
+<p>Template files live in <code class="docutils literal notranslate"><span class="pre">&lt;project&gt;/templates/</span></code> and follow the naming
+convention <code class="docutils literal notranslate"><span class="pre">{method}-{name}.jsonc</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">post-poweroff.jsonc</span></code>).
+Comments (<code class="docutils literal notranslate"><span class="pre">//</span> <span class="pre">line</span></code> and <code class="docutils literal notranslate"><span class="pre">/*</span> <span class="pre">block</span> <span class="pre">*/</span></code>) are stripped before parsing.</p>
+<section id="id1">
+<h2>Functions<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>load_template(name)</dt><dd><p>Read and parse a JSONC template file, returning its contents as a dict.</p>
+</dd>
+</dl>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.lib.templates.load_template">
+<span class="sig-prename descclassname"><span class="pre">api.lib.templates.</span></span><span class="sig-name descname"><span class="pre">load_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/lib/templates.html#load_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.lib.templates.load_template" title="Link to this definition">¶</a></dt>
+<dd><p>Load a JSONC template from the templates directory.</p>
+<section id="id2">
+<h2>Parameters<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>name<span class="classifier">str</span></dt><dd><p>Template basename without extension, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;get-health&quot;</span></code> for
+<code class="docutils literal notranslate"><span class="pre">get-health.jsonc</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>dict</dt><dd><p>Parsed contents of the template file.</p>
+</dd>
+</dl>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.lib.durations">Duration parsing and formatting for watchdog windows.</p>
+<p>Accepts compact human-friendly duration strings such as <code class="docutils literal notranslate"><span class="pre">5h</span></code>, <code class="docutils literal notranslate"><span class="pre">30m</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">1h-30m</span></code> and converts them to seconds, and vice versa. Shared by the
+CLI (which parses user input before sending it to the API) and the server
+(which validates it again, since client input is never trusted).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.lib.durations.format_duration">
+<span class="sig-prename descclassname"><span class="pre">api.lib.durations.</span></span><span class="sig-name descname"><span class="pre">format_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/lib/durations.html#format_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.lib.durations.format_duration" title="Link to this definition">¶</a></dt>
+<dd><p>Format a number of seconds into a compact human-readable string.</p>
+<p>Examples: <code class="docutils literal notranslate"><span class="pre">5400</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">&quot;1h</span> <span class="pre">30m&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">90</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">&quot;1m</span> <span class="pre">30s&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">45</span></code> -&gt;
+<code class="docutils literal notranslate"><span class="pre">&quot;45s&quot;</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The duration in seconds. Expected to be non-negative.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The formatted duration, using the two largest non-zero units
+(hours, minutes, seconds). Zero seconds formats as <code class="docutils literal notranslate"><span class="pre">&quot;0s&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.lib.durations.parse_duration">
+<span class="sig-prename descclassname"><span class="pre">api.lib.durations.</span></span><span class="sig-name descname"><span class="pre">parse_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/lib/durations.html#parse_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.lib.durations.parse_duration" title="Link to this definition">¶</a></dt>
+<dd><p>Parse a compact duration string (<code class="docutils literal notranslate"><span class="pre">5h</span></code>, <code class="docutils literal notranslate"><span class="pre">30m</span></code>, <code class="docutils literal notranslate"><span class="pre">1h-30m</span></code>,
+<code class="docutils literal notranslate"><span class="pre">1h30m</span></code>) into seconds. Case-insensitive; surrounding whitespace is
+stripped. A dash is only accepted between the hour and minute parts
+(not leading/trailing), and the total must be greater than zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">text</span></code> is not a valid duration, or totals zero.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>text</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.hw">Hardware abstraction layer for telemetry and power management.</p>
+<p id="module-api.hw.telemetry">Hardware statistics collection for Nexus API.</p>
+<p>Gathers CPU, RAM, swap, GPU (NVIDIA/AMD), and power sensor metrics
+from psutil, NVML, AMD SMI, and Linux sysfs interfaces.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.hw.telemetry.get_system_metrics">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.hw.telemetry.</span></span><span class="sig-name descname"><span class="pre">get_system_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pretty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_bytes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/hw/telemetry.html#get_system_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.hw.telemetry.get_system_metrics" title="Link to this definition">¶</a></dt>
+<dd><p>Asynchronously retrieve system metrics.</p>
+<p>Offloads hardware C-driver calls to a worker thread to keep the
+main asyncio event loop responsive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pretty</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – If True, returns formatted JSON (indented).</p></li>
+<li><p><strong>return_bytes</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – If True, returns bytes directly without decoding.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>JSON string or bytes containing system metrics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a> | <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.14)">bytes</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.hw.power">System power management via systemd.</p>
+<p>Wraps <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">poweroff</span></code> and <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">suspend</span></code> with flags that
+skip interactive authentication prompts and wall messages, so they can be
+triggered headlessly by a daemon process.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.hw.power.system_poweroff">
+<span class="sig-prename descclassname"><span class="pre">api.hw.power.</span></span><span class="sig-name descname"><span class="pre">system_poweroff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/hw/power.html#system_poweroff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.hw.power.system_poweroff" title="Link to this definition">¶</a></dt>
+<dd><p>Initiate an immediate, non-interactive system power-off.</p>
+<p>systemd orchestrates the shutdown: every running process receives
+SIGTERM first, then SIGKILL after the timeout, before power is cut.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code> on success, or the stderr message from <code class="docutils literal notranslate"><span class="pre">systemctl</span></code>
+if the command failed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.hw.power.system_sleep">
+<span class="sig-prename descclassname"><span class="pre">api.hw.power.</span></span><span class="sig-name descname"><span class="pre">system_sleep</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/hw/power.html#system_sleep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.hw.power.system_sleep" title="Link to this definition">¶</a></dt>
+<dd><p>Initiate an immediate, non-interactive S3 (suspend-to-RAM) sleep.</p>
+<p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">suspend</span></code> targets the <code class="docutils literal notranslate"><span class="pre">mem</span></code> sleep state by default,
+which is ACPI S3: system context is kept in RAM and everything
+else is powered down.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code> on success, or the stderr message from <code class="docutils literal notranslate"><span class="pre">systemctl</span></code>
+if the command failed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.mc">Minecraft server integration for the watchdog.</p>
+<dl class="simple">
+<dt>Submodules:</dt><dd><dl class="simple">
+<dt>slp: Server List Ping probe (stdlib <code class="docutils literal notranslate"><span class="pre">socket</span></code>), used to detect</dt><dd><p>whether the Minecraft server is reachable and how many players
+are online.</p>
+</dd>
+<dt>service: Thin <code class="docutils literal notranslate"><span class="pre">systemctl</span></code> wrappers to query and restart the</dt><dd><p>Minecraft systemd unit.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p id="module-api.mc.slp">Minecraft Java Edition server status probe.</p>
+<p>Thin async wrapper over <a class="reference external" href="https://pypi.org/project/mcstatus/">mcstatus</a>’s
+Java status query. Replaces a hand-written Server List Ping client: see
+<code class="docutils literal notranslate"><span class="pre">IMPLEMENT_MC_WATCHDOG.md</span></code> for why (user request to simplify).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.mc.slp.</span></span><span class="sig-name descname"><span class="pre">McStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">online</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">players_online</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">players_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latency_ms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/slp.html#McStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.slp.McStatus" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Result of a Minecraft Java Edition status probe.</p>
+<p><code class="docutils literal notranslate"><span class="pre">online</span></code> reflects whether the server answered the status query.
+On success, <code class="docutils literal notranslate"><span class="pre">players_online</span></code>, <code class="docutils literal notranslate"><span class="pre">players_max</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">motd</span></code> carry the parsed status, <code class="docutils literal notranslate"><span class="pre">latency_ms</span></code> is the round-trip
+time reported by <code class="docutils literal notranslate"><span class="pre">mcstatus</span></code>, and <code class="docutils literal notranslate"><span class="pre">error</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. On
+failure, every field except <code class="docutils literal notranslate"><span class="pre">online</span></code> and <code class="docutils literal notranslate"><span class="pre">error</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">error</span></code> holds a human-readable failure reason.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>online</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>players_online</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>players_max</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>motd</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>latency_ms</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>error</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.error" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.latency_ms">
+<span class="sig-name descname"><span class="pre">latency_ms</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.latency_ms" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.motd">
+<span class="sig-name descname"><span class="pre">motd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.motd" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.online">
+<span class="sig-name descname"><span class="pre">online</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.online" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.players_max">
+<span class="sig-name descname"><span class="pre">players_max</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.players_max" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.players_online">
+<span class="sig-name descname"><span class="pre">players_online</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.players_online" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.slp.McStatus.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#api.mc.slp.McStatus.version" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.slp.probe">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.mc.slp.</span></span><span class="sig-name descname"><span class="pre">probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/slp.html#probe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.slp.probe" title="Link to this definition">¶</a></dt>
+<dd><p>Probe a Minecraft Java Edition server for its status.</p>
+<p>Never raises: any connection, timeout, or protocol error from
+<code class="docutils literal notranslate"><span class="pre">mcstatus</span></code> is captured in the returned <a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><code class="xref py py-class docutils literal notranslate"><span class="pre">McStatus</span></code></a>. Uses a
+single attempt (<code class="docutils literal notranslate"><span class="pre">tries=1</span></code>) since the watchdog re-probes every
+<a class="reference internal" href="#api.mc.watchdog.PROBE_INTERVAL" title="api.mc.watchdog.PROBE_INTERVAL"><code class="xref py py-data docutils literal notranslate"><span class="pre">PROBE_INTERVAL</span></code></a> seconds anyway.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The server hostname or IP address.</p></li>
+<li><p><strong>port</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The server port.</p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Connect/read timeout in seconds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><code class="xref py py-class docutils literal notranslate"><span class="pre">McStatus</span></code></a> describing the outcome. <code class="docutils literal notranslate"><span class="pre">online</span></code> is
+<code class="docutils literal notranslate"><span class="pre">False</span></code> and <code class="docutils literal notranslate"><span class="pre">error</span></code> is set on any failure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><em>McStatus</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.mc.service">systemd unit control for the Minecraft server watchdog.</p>
+<p>Thin wrappers over <code class="docutils literal notranslate"><span class="pre">systemctl</span></code> to query and restart the Minecraft
+systemd unit. Used by the watchdog’s recovery policy (see
+<code class="docutils literal notranslate"><span class="pre">IMPLEMENT_MC_WATCHDOG.md</span></code>) to detect a crashed or hung server and
+restart it. Every call runs with an explicit timeout and never uses a
+shell.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.service.is_active">
+<span class="sig-prename descclassname"><span class="pre">api.mc.service.</span></span><span class="sig-name descname"><span class="pre">is_active</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/service.html#is_active"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.service.is_active" title="Link to this definition">¶</a></dt>
+<dd><p>Return the systemd active-state of a unit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>unit</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The systemd unit name, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;mc-server-create&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The state reported by <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">is-active</span></code> (e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;active&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;failed&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;inactive&quot;</span></code>), stripped of
+whitespace. Returns <code class="docutils literal notranslate"><span class="pre">&quot;unknown&quot;</span></code> if the command times out,
+cannot be run, or returns no output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.service.restart">
+<span class="sig-prename descclassname"><span class="pre">api.mc.service.</span></span><span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/service.html#restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.service.restart" title="Link to this definition">¶</a></dt>
+<dd><p>Restart a systemd unit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>unit</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The systemd unit name, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;mc-server-create&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code> on success, or an error message describing the
+failure: the stderr of a failed <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">restart</span></code>, or a
+timeout/OS error message.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.mc.watchdog">Minecraft server watchdog: state machine and polling loop.</p>
+<p>See <code class="docutils literal notranslate"><span class="pre">IMPLEMENT_MC_WATCHDOG.md</span></code> for the full design and decision log.
+The decision logic lives in the pure function <a class="reference internal" href="#api.mc.watchdog.tick" title="api.mc.watchdog.tick"><code class="xref py py-func docutils literal notranslate"><span class="pre">tick()</span></code></a>, which takes
+an explicit <code class="docutils literal notranslate"><span class="pre">now</span></code> and never performs I/O or sleeps, so it is testable
+without a real clock, socket, or subprocess. <a class="reference internal" href="#api.mc.watchdog.watchdog_loop" title="api.mc.watchdog.watchdog_loop"><code class="xref py py-func docutils literal notranslate"><span class="pre">watchdog_loop()</span></code></a> is
+the thin async wrapper that supplies the real clock and the probe/
+restart/poweroff side effects.</p>
+<p><a class="reference internal" href="#api.mc.watchdog.STATE" title="api.mc.watchdog.STATE"><code class="xref py py-data docutils literal notranslate"><span class="pre">STATE</span></code></a> lives in process memory only, so a reboot or service
+restart always starts disarmed, per the design doc.</p>
+<p>No lock guards <a class="reference internal" href="#api.mc.watchdog.STATE" title="api.mc.watchdog.STATE"><code class="xref py py-data docutils literal notranslate"><span class="pre">STATE</span></code></a>. This process runs a single asyncio event
+loop, so any stretch of code with no <code class="docutils literal notranslate"><span class="pre">await</span></code> in it — every function
+below except <a class="reference internal" href="#api.mc.watchdog.watchdog_loop" title="api.mc.watchdog.watchdog_loop"><code class="xref py py-func docutils literal notranslate"><span class="pre">watchdog_loop()</span></code></a> — runs atomically with respect to
+every other coroutine, including the HTTP handlers in <code class="docutils literal notranslate"><span class="pre">api.main</span></code>. The
+only place <a class="reference internal" href="#api.mc.watchdog.STATE" title="api.mc.watchdog.STATE"><code class="xref py py-data docutils literal notranslate"><span class="pre">STATE</span></code></a> is read on both sides of an <code class="docutils literal notranslate"><span class="pre">await</span></code> is
+<a class="reference internal" href="#api.mc.watchdog.watchdog_loop" title="api.mc.watchdog.watchdog_loop"><code class="xref py py-func docutils literal notranslate"><span class="pre">watchdog_loop()</span></code></a>’s blocking probe/restart/poweroff calls; it
+re-checks <code class="docutils literal notranslate"><span class="pre">arm_generation</span></code> (bumped by every <a class="reference internal" href="#api.mc.watchdog.arm" title="api.mc.watchdog.arm"><code class="xref py py-func docutils literal notranslate"><span class="pre">arm()</span></code></a> call) after
+each <code class="docutils literal notranslate"><span class="pre">await</span></code> so a disarm or re-arm that raced an in-flight I/O call is
+discarded instead of applied to a state it no longer reflects.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">Action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#Action"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.Action" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<p>Decision returned by <a class="reference internal" href="#api.mc.watchdog.tick" title="api.mc.watchdog.tick"><code class="xref py py-func docutils literal notranslate"><span class="pre">tick()</span></code></a> for the caller to apply.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action.DISARM_EXPIRED">
+<span class="sig-name descname"><span class="pre">DISARM_EXPIRED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'disarm_expired'</span></span><a class="headerlink" href="#api.mc.watchdog.Action.DISARM_EXPIRED" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action.DISARM_UNRECOVERABLE">
+<span class="sig-name descname"><span class="pre">DISARM_UNRECOVERABLE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'disarm_unrecoverable'</span></span><a class="headerlink" href="#api.mc.watchdog.Action.DISARM_UNRECOVERABLE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action.NOOP">
+<span class="sig-name descname"><span class="pre">NOOP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'noop'</span></span><a class="headerlink" href="#api.mc.watchdog.Action.NOOP" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action.POWEROFF">
+<span class="sig-name descname"><span class="pre">POWEROFF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'poweroff'</span></span><a class="headerlink" href="#api.mc.watchdog.Action.POWEROFF" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.Action.RESTART_MC">
+<span class="sig-name descname"><span class="pre">RESTART_MC</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'restart_mc'</span></span><a class="headerlink" href="#api.mc.watchdog.Action.RESTART_MC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="api.mc.watchdog.DEFAULT_THRESHOLD">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_THRESHOLD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1800</span></span><a class="headerlink" href="#api.mc.watchdog.DEFAULT_THRESHOLD" title="Link to this definition">¶</a></dt>
+<dd><p>Default empty-server threshold (seconds) when none is supplied to <a class="reference internal" href="#api.mc.watchdog.arm" title="api.mc.watchdog.arm"><code class="xref py py-func docutils literal notranslate"><span class="pre">arm()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="api.mc.watchdog.MAX_RESTARTS">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">MAX_RESTARTS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#api.mc.watchdog.MAX_RESTARTS" title="Link to this definition">¶</a></dt>
+<dd><p>Maximum restart attempts per armed window before giving up.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="api.mc.watchdog.PROBE_INTERVAL">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">PROBE_INTERVAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30</span></span><a class="headerlink" href="#api.mc.watchdog.PROBE_INTERVAL" title="Link to this definition">¶</a></dt>
+<dd><p>Seconds between probes while armed.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="api.mc.watchdog.STARTUP_GRACE">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">STARTUP_GRACE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">300</span></span><a class="headerlink" href="#api.mc.watchdog.STARTUP_GRACE" title="Link to this definition">¶</a></dt>
+<dd><p>Seconds after a restart before another failed probe counts as a new
+failure, giving a modded server time to boot.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="api.mc.watchdog.STATE">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">STATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">WatchdogState(armed=False,</span> <span class="pre">armed_at=None,</span> <span class="pre">deadline=None,</span> <span class="pre">deadline_wall=None,</span> <span class="pre">threshold_seconds=1800,</span> <span class="pre">empty_since=None,</span> <span class="pre">restarts_used=0,</span> <span class="pre">last_restart_at=None,</span> <span class="pre">last_probe=None,</span> <span class="pre">last_disarm_reason=None,</span> <span class="pre">arm_generation=0)</span></span><a class="headerlink" href="#api.mc.watchdog.STATE" title="Link to this definition">¶</a></dt>
+<dd><p>Module-level singleton — the watchdog’s only state, in-memory only.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">WatchdogState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">armed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">armed_at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deadline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deadline_wall</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_seconds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">empty_since</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restarts_used</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_restart_at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_probe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_disarm_reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arm_generation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#WatchdogState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.WatchdogState" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>In-memory watchdog state (see module docstring).</p>
+<p><code class="docutils literal notranslate"><span class="pre">armed_at</span></code>/<code class="docutils literal notranslate"><span class="pre">deadline</span></code>/<code class="docutils literal notranslate"><span class="pre">empty_since</span></code>/<code class="docutils literal notranslate"><span class="pre">last_restart_at</span></code> are
+monotonic seconds; <code class="docutils literal notranslate"><span class="pre">deadline_wall</span></code> is the matching wall-clock
+timestamp, kept only for display in <a class="reference internal" href="#api.mc.watchdog.snapshot" title="api.mc.watchdog.snapshot"><code class="xref py py-func docutils literal notranslate"><span class="pre">snapshot()</span></code></a>.
+<code class="docutils literal notranslate"><span class="pre">arm_generation</span></code> increments on every <a class="reference internal" href="#api.mc.watchdog.arm" title="api.mc.watchdog.arm"><code class="xref py py-func docutils literal notranslate"><span class="pre">arm()</span></code></a> call and is how
+<a class="reference internal" href="#api.mc.watchdog.watchdog_loop" title="api.mc.watchdog.watchdog_loop"><code class="xref py py-func docutils literal notranslate"><span class="pre">watchdog_loop()</span></code></a> detects a disarm/re-arm racing an in-flight
+probe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>armed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>armed_at</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>deadline</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>deadline_wall</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>threshold_seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>empty_since</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>restarts_used</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>last_restart_at</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>last_probe</strong> (<a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><em>McStatus</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>last_disarm_reason</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>arm_generation</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.arm_generation">
+<span class="sig-name descname"><span class="pre">arm_generation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.arm_generation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.armed">
+<span class="sig-name descname"><span class="pre">armed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.armed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.armed_at">
+<span class="sig-name descname"><span class="pre">armed_at</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.armed_at" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.deadline">
+<span class="sig-name descname"><span class="pre">deadline</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.deadline" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.deadline_wall">
+<span class="sig-name descname"><span class="pre">deadline_wall</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.deadline_wall" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.empty_since">
+<span class="sig-name descname"><span class="pre">empty_since</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.empty_since" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.last_disarm_reason">
+<span class="sig-name descname"><span class="pre">last_disarm_reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.last_disarm_reason" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.last_probe">
+<span class="sig-name descname"><span class="pre">last_probe</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><span class="pre">McStatus</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.last_probe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.last_restart_at">
+<span class="sig-name descname"><span class="pre">last_restart_at</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.last_restart_at" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.restarts_used">
+<span class="sig-name descname"><span class="pre">restarts_used</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.restarts_used" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="api.mc.watchdog.WatchdogState.threshold_seconds">
+<span class="sig-name descname"><span class="pre">threshold_seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1800</span></span><a class="headerlink" href="#api.mc.watchdog.WatchdogState.threshold_seconds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.watchdog.arm">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">arm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">now</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_seconds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_seconds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1800</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#arm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.arm" title="Link to this definition">¶</a></dt>
+<dd><p>Arm (or re-arm) the watchdog for an active window.</p>
+<p>Re-arming while already armed replaces the deadline/threshold and
+resets the empty and restart counters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">active_seconds</span></code> or <code class="docutils literal notranslate"><span class="pre">threshold_seconds</span></code> is
+    not greater than zero.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>state</strong> (<a class="reference internal" href="#api.mc.watchdog.WatchdogState" title="api.mc.watchdog.WatchdogState"><em>WatchdogState</em></a>)</p></li>
+<li><p><strong>now</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>active_seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>threshold_seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.watchdog.disarm">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">disarm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#disarm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.disarm" title="Link to this definition">¶</a></dt>
+<dd><p>Disarm the watchdog and record why.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – One of <code class="docutils literal notranslate"><span class="pre">&quot;manual&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;expired&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mc_unrecoverable&quot;</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">&quot;poweroff_failed&quot;</span></code> (a failed <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">poweroff</span></code>,
+recorded instead of leaving the watchdog stuck retrying it
+every tick with no way to surface the failure via <code class="docutils literal notranslate"><span class="pre">status</span></code>).</p></li>
+<li><p><strong>state</strong> (<a class="reference internal" href="#api.mc.watchdog.WatchdogState" title="api.mc.watchdog.WatchdogState"><em>WatchdogState</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.watchdog.snapshot">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">now</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.snapshot" title="Link to this definition">¶</a></dt>
+<dd><p>Build the status payload described in <code class="docutils literal notranslate"><span class="pre">IMPLEMENT_MC_WATCHDOG.md</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> (<a class="reference internal" href="#api.mc.watchdog.WatchdogState" title="api.mc.watchdog.WatchdogState"><em>WatchdogState</em></a>) – The watchdog state to read (<code class="docutils literal notranslate"><span class="pre">empty_since</span></code>/<code class="docutils literal notranslate"><span class="pre">armed</span></code>/
+<code class="docutils literal notranslate"><span class="pre">deadline</span></code>/etc. always come from here).</p></li>
+<li><p><strong>now</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Monotonic time used for <code class="docutils literal notranslate"><span class="pre">remaining_seconds</span></code>/<code class="docutils literal notranslate"><span class="pre">empty_seconds</span></code>.</p></li>
+<li><p><strong>probe</strong> (<a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><em>McStatus</em></a><em> | </em><em>None</em>) – When given, this is used for the reachability/player-count/
+server-metadata fields instead of <code class="docutils literal notranslate"><span class="pre">state.last_probe</span></code>. This
+never mutates <code class="docutils literal notranslate"><span class="pre">state</span></code> — callers (e.g. a live GET status
+probe) may pass a probe result without it ever being recorded
+as <code class="docutils literal notranslate"><span class="pre">state.last_probe</span></code>, which only <a class="reference internal" href="#api.mc.watchdog.tick" title="api.mc.watchdog.tick"><code class="xref py py-func docutils literal notranslate"><span class="pre">tick()</span></code></a> owns. When
+omitted, behavior is unchanged: <code class="docutils literal notranslate"><span class="pre">state.last_probe</span></code> (set by
+the polling loop) is used, which is <code class="docutils literal notranslate"><span class="pre">None</span></code> while disarmed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.watchdog.tick">
+<span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">tick</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">now</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#tick"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.tick" title="Link to this definition">¶</a></dt>
+<dd><p>Decide the watchdog’s next action for one probe cycle.</p>
+<p>Pure with respect to I/O: may update <code class="docutils literal notranslate"><span class="pre">state.empty_since</span></code>/
+<code class="docutils literal notranslate"><span class="pre">last_probe</span></code> but never sleeps, probes, restarts, or powers
+anything off — the caller applies the returned <a class="reference internal" href="#api.mc.watchdog.Action" title="api.mc.watchdog.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a>.</p>
+<p>Order: not armed -&gt; <a class="reference internal" href="#api.mc.watchdog.Action.NOOP" title="api.mc.watchdog.Action.NOOP"><code class="xref py py-data docutils literal notranslate"><span class="pre">NOOP</span></code></a>. Window expired
+(<code class="docutils literal notranslate"><span class="pre">now</span> <span class="pre">&gt;=</span> <span class="pre">deadline</span></code>) -&gt; <a class="reference internal" href="#api.mc.watchdog.Action.DISARM_EXPIRED" title="api.mc.watchdog.Action.DISARM_EXPIRED"><code class="xref py py-data docutils literal notranslate"><span class="pre">DISARM_EXPIRED</span></code></a>,
+even if also empty past the threshold (expiry wins, no poweroff).
+Reachable with players -&gt; reset the empty counter, NOOP. Reachable,
+empty -&gt; count up from the first empty probe; at
+<code class="docutils literal notranslate"><span class="pre">threshold_seconds</span></code> -&gt; <a class="reference internal" href="#api.mc.watchdog.Action.POWEROFF" title="api.mc.watchdog.Action.POWEROFF"><code class="xref py py-data docutils literal notranslate"><span class="pre">POWEROFF</span></code></a>.
+Unreachable -&gt; never counts as empty; inside the startup grace since
+the last restart -&gt; NOOP; at <a class="reference internal" href="#api.mc.watchdog.MAX_RESTARTS" title="api.mc.watchdog.MAX_RESTARTS"><code class="xref py py-data docutils literal notranslate"><span class="pre">MAX_RESTARTS</span></code></a> -&gt;
+<a class="reference internal" href="#api.mc.watchdog.Action.DISARM_UNRECOVERABLE" title="api.mc.watchdog.Action.DISARM_UNRECOVERABLE"><code class="xref py py-data docutils literal notranslate"><span class="pre">DISARM_UNRECOVERABLE</span></code></a>; otherwise
+-&gt; <a class="reference internal" href="#api.mc.watchdog.Action.RESTART_MC" title="api.mc.watchdog.Action.RESTART_MC"><code class="xref py py-data docutils literal notranslate"><span class="pre">RESTART_MC</span></code></a>. <code class="docutils literal notranslate"><span class="pre">restarts_used</span></code> is only
+reset by <a class="reference internal" href="#api.mc.watchdog.arm" title="api.mc.watchdog.arm"><code class="xref py py-func docutils literal notranslate"><span class="pre">arm()</span></code></a> (capped per armed window, not per outage).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> (<a class="reference internal" href="#api.mc.watchdog.WatchdogState" title="api.mc.watchdog.WatchdogState"><em>WatchdogState</em></a>)</p></li>
+<li><p><strong>now</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>probe</strong> (<a class="reference internal" href="#api.mc.slp.McStatus" title="api.mc.slp.McStatus"><em>McStatus</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#api.mc.watchdog.Action" title="api.mc.watchdog.Action"><em>Action</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.mc.watchdog.watchdog_loop">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">api.mc.watchdog.</span></span><span class="sig-name descname"><span class="pre">watchdog_loop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mc/watchdog.html#watchdog_loop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.mc.watchdog.watchdog_loop" title="Link to this definition">¶</a></dt>
+<dd><p>Poll Minecraft every <a class="reference internal" href="#api.mc.watchdog.PROBE_INTERVAL" title="api.mc.watchdog.PROBE_INTERVAL"><code class="xref py py-data docutils literal notranslate"><span class="pre">PROBE_INTERVAL</span></code></a> seconds while armed and
+apply the <a class="reference internal" href="#api.mc.watchdog.tick" title="api.mc.watchdog.tick"><code class="xref py py-func docutils literal notranslate"><span class="pre">tick()</span></code></a> decision, until the task is cancelled.</p>
+<p>Each iteration snapshots <code class="docutils literal notranslate"><span class="pre">armed</span></code>/<code class="docutils literal notranslate"><span class="pre">arm_generation</span></code> before the
+blocking probe, then re-checks both after it returns (see the module
+docstring) so a disarm/re-arm racing an in-flight probe is discarded
+rather than applied. The same re-check gates the bookkeeping after
+the restart/poweroff calls, which also cross an <code class="docutils literal notranslate"><span class="pre">await</span></code>. The whole
+iteration runs inside <code class="docutils literal notranslate"><span class="pre">try/except</span> <span class="pre">Exception</span></code> so one bad probe never
+kills the task; <code class="docutils literal notranslate"><span class="pre">CancelledError</span></code> is a <code class="docutils literal notranslate"><span class="pre">BaseException</span></code> and still
+propagates for clean shutdown.</p>
+<p>Not started while <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> is on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>port</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>unit</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-api.db">Database utilities for Nexus API.</p>
+<p id="module-api.db.db">Database connection and schema management for Nexus API.</p>
+<p>Provides SQLite connection utilities and table creation.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="api.db.db.create_db_tables">
+<span class="sig-prename descclassname"><span class="pre">api.db.db.</span></span><span class="sig-name descname"><span class="pre">create_db_tables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/db/db.html#create_db_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.db.db.create_db_tables" title="Link to this definition">¶</a></dt>
+<dd><p>Create all required database tables if they do not already exist.</p>
+<p>Uses CREATE TABLE IF NOT EXISTS to safely initialize the schema
+without dropping existing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conn</strong> (<a class="reference external" href="https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection" title="(in Python v3.14)"><em>Connection</em></a>) – Active sqlite3.Connection to execute DDL against.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="api.db.db.get_db_connection">
+<span class="sig-prename descclassname"><span class="pre">api.db.db.</span></span><span class="sig-name descname"><span class="pre">get_db_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/runner/work/nexus-API/nexus-API/api/db/nexus_api.db')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/db/db.html#get_db_connection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#api.db.db.get_db_connection" title="Link to this definition">¶</a></dt>
+<dd><p>Create and return a SQLite connection with foreign keys enabled.</p>
+<p>Establishes a connection to the specified SQLite database file,
+enables foreign key enforcement, and sets row_factory to sqlite3.Row
+for dict-like access to query results. Creates the parent directory
+and database file if they do not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Path to the SQLite database file, a path string,
+or ‘:memory:’ for an in-memory database.
+Defaults to DB_PATH from config.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Configured sqlite3.Connection with foreign keys enabled and
+row_factory set to sqlite3.Row.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection" title="(in Python v3.14)"><em>Connection</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Mocha Pulse
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">API Reference</a><ul>
+<li><a class="reference internal" href="#api.main.WatchdogArmRequest"><code class="docutils literal notranslate"><span class="pre">WatchdogArmRequest</span></code></a><ul>
+<li><a class="reference internal" href="#api.main.WatchdogArmRequest.active_seconds"><code class="docutils literal notranslate"><span class="pre">WatchdogArmRequest.active_seconds</span></code></a></li>
+<li><a class="reference internal" href="#api.main.WatchdogArmRequest.model_config"><code class="docutils literal notranslate"><span class="pre">WatchdogArmRequest.model_config</span></code></a></li>
+<li><a class="reference internal" href="#api.main.WatchdogArmRequest.threshold_seconds"><code class="docutils literal notranslate"><span class="pre">WatchdogArmRequest.threshold_seconds</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api.main.api_root"><code class="docutils literal notranslate"><span class="pre">api_root()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.delete_mc_server_watchdog"><code class="docutils literal notranslate"><span class="pre">delete_mc_server_watchdog()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.favicon"><code class="docutils literal notranslate"><span class="pre">favicon()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.get_health"><code class="docutils literal notranslate"><span class="pre">get_health()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.get_mc_server_watchdog"><code class="docutils literal notranslate"><span class="pre">get_mc_server_watchdog()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.get_telemetry"><code class="docutils literal notranslate"><span class="pre">get_telemetry()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.lifespan"><code class="docutils literal notranslate"><span class="pre">lifespan()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.post_mc_server_watchdog"><code class="docutils literal notranslate"><span class="pre">post_mc_server_watchdog()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.post_poweroff"><code class="docutils literal notranslate"><span class="pre">post_poweroff()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.post_sleep"><code class="docutils literal notranslate"><span class="pre">post_sleep()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.root"><code class="docutils literal notranslate"><span class="pre">root()</span></code></a></li>
+<li><a class="reference internal" href="#api.main.verify_api_key"><code class="docutils literal notranslate"><span class="pre">verify_api_key()</span></code></a></li>
+<li><a class="reference internal" href="#constants">Constants</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#api.config.paths.ensure_dotenv"><code class="docutils literal notranslate"><span class="pre">ensure_dotenv()</span></code></a></li>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#id1">Functions</a></li>
+<li><a class="reference internal" href="#api.lib.templates.load_template"><code class="docutils literal notranslate"><span class="pre">load_template()</span></code></a></li>
+<li><a class="reference internal" href="#api.lib.durations.format_duration"><code class="docutils literal notranslate"><span class="pre">format_duration()</span></code></a></li>
+<li><a class="reference internal" href="#api.lib.durations.parse_duration"><code class="docutils literal notranslate"><span class="pre">parse_duration()</span></code></a></li>
+<li><a class="reference internal" href="#api.hw.telemetry.get_system_metrics"><code class="docutils literal notranslate"><span class="pre">get_system_metrics()</span></code></a></li>
+<li><a class="reference internal" href="#api.hw.power.system_poweroff"><code class="docutils literal notranslate"><span class="pre">system_poweroff()</span></code></a></li>
+<li><a class="reference internal" href="#api.hw.power.system_sleep"><code class="docutils literal notranslate"><span class="pre">system_sleep()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus"><code class="docutils literal notranslate"><span class="pre">McStatus</span></code></a><ul>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.error"><code class="docutils literal notranslate"><span class="pre">McStatus.error</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.latency_ms"><code class="docutils literal notranslate"><span class="pre">McStatus.latency_ms</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.motd"><code class="docutils literal notranslate"><span class="pre">McStatus.motd</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.online"><code class="docutils literal notranslate"><span class="pre">McStatus.online</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.players_max"><code class="docutils literal notranslate"><span class="pre">McStatus.players_max</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.players_online"><code class="docutils literal notranslate"><span class="pre">McStatus.players_online</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.slp.McStatus.version"><code class="docutils literal notranslate"><span class="pre">McStatus.version</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api.mc.slp.probe"><code class="docutils literal notranslate"><span class="pre">probe()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.service.is_active"><code class="docutils literal notranslate"><span class="pre">is_active()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.service.restart"><code class="docutils literal notranslate"><span class="pre">restart()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.Action"><code class="docutils literal notranslate"><span class="pre">Action</span></code></a><ul>
+<li><a class="reference internal" href="#api.mc.watchdog.Action.DISARM_EXPIRED"><code class="docutils literal notranslate"><span class="pre">Action.DISARM_EXPIRED</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.Action.DISARM_UNRECOVERABLE"><code class="docutils literal notranslate"><span class="pre">Action.DISARM_UNRECOVERABLE</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.Action.NOOP"><code class="docutils literal notranslate"><span class="pre">Action.NOOP</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.Action.POWEROFF"><code class="docutils literal notranslate"><span class="pre">Action.POWEROFF</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.Action.RESTART_MC"><code class="docutils literal notranslate"><span class="pre">Action.RESTART_MC</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api.mc.watchdog.DEFAULT_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">DEFAULT_THRESHOLD</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.MAX_RESTARTS"><code class="docutils literal notranslate"><span class="pre">MAX_RESTARTS</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.PROBE_INTERVAL"><code class="docutils literal notranslate"><span class="pre">PROBE_INTERVAL</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.STARTUP_GRACE"><code class="docutils literal notranslate"><span class="pre">STARTUP_GRACE</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.STATE"><code class="docutils literal notranslate"><span class="pre">STATE</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState"><code class="docutils literal notranslate"><span class="pre">WatchdogState</span></code></a><ul>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.arm_generation"><code class="docutils literal notranslate"><span class="pre">WatchdogState.arm_generation</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.armed"><code class="docutils literal notranslate"><span class="pre">WatchdogState.armed</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.armed_at"><code class="docutils literal notranslate"><span class="pre">WatchdogState.armed_at</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.deadline"><code class="docutils literal notranslate"><span class="pre">WatchdogState.deadline</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.deadline_wall"><code class="docutils literal notranslate"><span class="pre">WatchdogState.deadline_wall</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.empty_since"><code class="docutils literal notranslate"><span class="pre">WatchdogState.empty_since</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.last_disarm_reason"><code class="docutils literal notranslate"><span class="pre">WatchdogState.last_disarm_reason</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.last_probe"><code class="docutils literal notranslate"><span class="pre">WatchdogState.last_probe</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.last_restart_at"><code class="docutils literal notranslate"><span class="pre">WatchdogState.last_restart_at</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.restarts_used"><code class="docutils literal notranslate"><span class="pre">WatchdogState.restarts_used</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.WatchdogState.threshold_seconds"><code class="docutils literal notranslate"><span class="pre">WatchdogState.threshold_seconds</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api.mc.watchdog.arm"><code class="docutils literal notranslate"><span class="pre">arm()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.disarm"><code class="docutils literal notranslate"><span class="pre">disarm()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.tick"><code class="docutils literal notranslate"><span class="pre">tick()</span></code></a></li>
+<li><a class="reference internal" href="#api.mc.watchdog.watchdog_loop"><code class="docutils literal notranslate"><span class="pre">watchdog_loop()</span></code></a></li>
+<li><a class="reference internal" href="#api.db.db.create_db_tables"><code class="docutils literal notranslate"><span class="pre">create_db_tables()</span></code></a></li>
+<li><a class="reference internal" href="#api.db.db.get_db_connection"><code class="docutils literal notranslate"><span class="pre">get_db_connection()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
