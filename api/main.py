@@ -200,56 +200,39 @@ class WatchdogArmRequest(BaseModel):
 
 
 @api_v1_router.post("/mc-server/watchdog")
-async def post_mc_server_watchdog(body: WatchdogArmRequest):
-    """Arm (or re-arm) the Minecraft server watchdog.
-
-    Re-arming while already armed replaces the deadline and threshold
-    and resets the empty/restart counters (see
-    :func:`api.mc.watchdog.arm`). Returns the resulting status payload.
-    When ``DEBUG`` is enabled the request body is still validated, but
-    a stub template is returned instead and the watchdog state is never
-    touched, so nothing can be armed accidentally during development.
+def post_mc_server_watchdog(body: WatchdogArmRequest):
+    """Arm (or re-arm) the Minecraft server watchdog. Returns the status
+    payload. ``DEBUG`` still validates the body but returns a stub
+    template and never touches the watchdog state.
     """
     if runtime.DEBUG:
         return load_template("post-mc-server-watchdog")
-    async with mc_watchdog.STATE_LOCK:
-        mc_watchdog.arm(
-            mc_watchdog.STATE,
-            time.monotonic(),
-            body.active_seconds,
-            body.threshold_seconds,
-        )
-        return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+    mc_watchdog.arm(
+        mc_watchdog.STATE, time.monotonic(), body.active_seconds, body.threshold_seconds
+    )
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
 
 
 @api_v1_router.delete("/mc-server/watchdog")
-async def delete_mc_server_watchdog():
-    """Disarm the Minecraft server watchdog.
-
-    Idempotent: calling it while already disarmed simply re-records the
-    ``"manual"`` reason and returns the current status payload. When
-    ``DEBUG`` is enabled a stub template is returned instead and the
-    watchdog state is never touched.
+def delete_mc_server_watchdog():
+    """Disarm the Minecraft server watchdog (idempotent). ``DEBUG``
+    returns a stub template and never touches the watchdog state.
     """
     if runtime.DEBUG:
         return load_template("delete-mc-server-watchdog")
-    async with mc_watchdog.STATE_LOCK:
-        mc_watchdog.disarm(mc_watchdog.STATE, "manual")
-        return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+    mc_watchdog.disarm(mc_watchdog.STATE, "manual")
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
 
 
 @api_v1_router.get("/mc-server/watchdog")
-async def get_mc_server_watchdog():
-    """Return the current Minecraft server watchdog status.
-
-    See :func:`api.mc.watchdog.snapshot` for the payload shape. When
-    ``DEBUG`` is enabled a stub template is returned instead and the
-    watchdog state is never touched.
+def get_mc_server_watchdog():
+    """Return the current watchdog status; see
+    :func:`api.mc.watchdog.snapshot` for the payload shape. ``DEBUG``
+    returns a stub template and never touches the watchdog state.
     """
     if runtime.DEBUG:
         return load_template("get-mc-server-watchdog")
-    async with mc_watchdog.STATE_LOCK:
-        return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
 
 
 @api_v1_router.get("/telemetry")
