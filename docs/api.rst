@@ -36,6 +36,11 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: api.lib.durations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: api.hw
    :members:
    :undoc-members:
