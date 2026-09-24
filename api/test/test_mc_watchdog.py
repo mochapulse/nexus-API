@@ -7,6 +7,7 @@ Minecraft server, or actually sleep/power off the host.
 """
 
 import asyncio
+import logging
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
@@ -342,3 +343,59 @@ class TestWatchdogLoop:
 
         probe.assert_not_called()
         sleep.assert_called_once_with(watchdog.PROBE_INTERVAL)
+
+    async def test_probe_error_is_logged_and_loop_continues(self, caplog):
+        # A probe that raises must not kill the task: the iteration is
+        # logged and the loop tries again on the next tick.
+        watchdog.arm(watchdog.STATE, now=0.0, active_seconds=10_000, threshold_seconds=100)
+
+        with (
+            patch.object(watchdog.time, "monotonic", return_value=50.0),
+            patch.object(
+                watchdog.slp, "probe", side_effect=[RuntimeError("boom"), _online(3)]
+            ) as probe,
+            patch.object(watchdog.service, "restart") as restart,
+            patch.object(watchdog.power, "system_poweroff") as poweroff,
+            patch.object(
+                watchdog.asyncio,
+                "sleep",
+                new=AsyncMock(side_effect=[None, asyncio.CancelledError()]),
+            ),
+            caplog.at_level(logging.ERROR, logger="api.mc.watchdog"),
+        ):
+            with pytest.raises(asyncio.CancelledError):
+                await watchdog.watchdog_loop("localhost", 25565, "mc-server-create")
+
+        assert probe.call_count == 2
+        restart.assert_not_called()
+        poweroff.assert_not_called()
+        assert "Unexpected error" in caplog.text
+
+    async def test_disarm_during_probe_skips_action(self):
+        # If the watchdog is disarmed by the HTTP endpoint while a probe
+        # is in flight, the now-stale action must not be applied.
+        watchdog.arm(watchdog.STATE, now=0.0, active_seconds=10_000, threshold_seconds=100)
+        watchdog.STATE.empty_since = 0.0
+
+        def _probe_then_disarm(host, port):
+            watchdog.disarm(watchdog.STATE, "manual")
+            return _online(0)
+
+        with (
+            patch.object(watchdog.time, "monotonic", return_value=200.0),
+            patch.object(watchdog.slp, "probe", side_effect=_probe_then_disarm),
+            patch.object(watchdog.service, "restart") as restart,
+            patch.object(watchdog.power, "system_poweroff") as poweroff,
+            patch.object(
+                watchdog.asyncio,
+                "sleep",
+                new=AsyncMock(side_effect=asyncio.CancelledError()),
+            ),
+        ):
+            with pytest.raises(asyncio.CancelledError):
+                await watchdog.watchdog_loop("localhost", 25565, "mc-server-create")
+
+        restart.assert_not_called()
+        poweroff.assert_not_called()
+        assert watchdog.STATE.armed is False
+        assert watchdog.STATE.last_disarm_reason == "manual"

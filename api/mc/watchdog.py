@@ -15,9 +15,23 @@ State (:class:`WatchdogState`) lives in process memory only, via the
 module-level :data:`STATE` singleton — by design, per
 ``IMPLEMENT_MC_WATCHDOG.md``, so a reboot or service restart always
 starts disarmed. :data:`STATE_LOCK` serializes mutation between the
-polling loop and the (future, T4) HTTP endpoints; the process runs a
-single event loop, so a plain :class:`asyncio.Lock` is enough — no
+polling loop and the HTTP endpoints (T4); the process runs a single
+event loop, so a plain :class:`asyncio.Lock` is enough — no
 cross-process or multi-worker coordination is needed.
+
+:func:`watchdog_loop` never holds :data:`STATE_LOCK` across blocking
+I/O (the SLP probe, ``systemctl restart``, ``systemctl poweroff``):
+each iteration reads ``armed``/``arm_generation`` under the lock,
+releases it for the I/O, then re-acquires it to compute and apply the
+:func:`tick` decision. Because an HTTP endpoint can disarm or re-arm
+the watchdog while a probe is in flight, every re-acquisition re-checks
+``STATE.armed`` and ``STATE.arm_generation`` (bumped by every
+:func:`arm` call) before touching state, so a stale in-flight probe
+never applies an action against a state it no longer reflects. Each
+iteration also runs inside a ``try/except Exception`` so one bad probe
+or a transient error never kills the polling task; ``CancelledError``
+is a ``BaseException`` in Python 3.8+, so it is never caught there and
+still propagates for clean shutdown.
 
 Deviation from the design doc: :func:`watchdog_loop` disarms with the
 extra reason ``"poweroff_failed"`` (not listed among ``last_disarm_reason``
@@ -90,7 +104,11 @@ class WatchdogState:
     the first probe. ``last_disarm_reason`` records why the watchdog
     last left the armed state: ``"manual"``, ``"expired"``,
     ``"mc_unrecoverable"``, ``"poweroff_failed"``, or ``None`` if it has
-    never been disarmed.
+    never been disarmed. ``arm_generation`` increments on every
+    :func:`arm` call; :func:`watchdog_loop` captures it before releasing
+    :data:`STATE_LOCK` for a blocking probe, and compares it again on
+    re-acquisition to detect a disarm or re-arm that happened while the
+    probe was in flight, so a stale decision is never applied.
     """
 
     armed: bool = False
@@ -103,6 +121,7 @@ class WatchdogState:
     last_restart_at: float | None = None
     last_probe: slp.McStatus | None = None
     last_disarm_reason: str | None = None
+    arm_generation: int = 0
 
 
 #: Module-level singleton — the watchdog's only state, in-memory only.
@@ -145,6 +164,7 @@ def arm(
 
     state.armed = True
     state.armed_at = now
+    state.arm_generation += 1
     state.deadline = now + active_seconds
     state.deadline_wall = datetime.fromtimestamp(
         time.time() + active_seconds, tz=timezone.utc
@@ -309,9 +329,22 @@ async def watchdog_loop(host: str, port: int, unit: str) -> None:
     - :data:`Action.DISARM_EXPIRED` / :data:`Action.DISARM_UNRECOVERABLE`:
       disarms with the matching reason and logs at ``INFO``.
 
-    Not started while ``DEBUG`` is on, and not wired into the FastAPI
-    lifespan yet — both are T4. Propagates :class:`asyncio.CancelledError`
-    so application shutdown can cancel the task cleanly.
+    :data:`STATE_LOCK` is never held across the blocking probe/restart/
+    poweroff calls (see the module docstring): each iteration snapshots
+    ``armed``/``arm_generation`` under the lock, releases it for the I/O,
+    then re-acquires it to compute and apply the decision — re-checking
+    ``arm_generation`` so a disarm or re-arm that raced the in-flight
+    probe discards the now-stale action instead of applying it.
+
+    The whole iteration body runs inside a ``try/except Exception`` so
+    an unexpected error (a probe exception, and so on) is logged and the
+    loop retries on the next tick rather than dying;
+    :class:`asyncio.CancelledError` is a ``BaseException``, not an
+    ``Exception``, so it is never swallowed here and still propagates
+    for clean task cancellation on shutdown.
+
+    Not started while ``DEBUG`` is on. Wired into the FastAPI lifespan
+    in T4.
 
     Args:
         host: Minecraft server host to probe (``localhost`` in production).
@@ -321,45 +354,70 @@ async def watchdog_loop(host: str, port: int, unit: str) -> None:
     log.info("Minecraft watchdog loop started (host=%s port=%d unit=%s)", host, port, unit)
 
     while True:
-        async with STATE_LOCK:
-            if STATE.armed:
+        try:
+            async with STATE_LOCK:
+                armed = STATE.armed
+                generation = STATE.arm_generation
+
+            if armed:
                 probe_result = await asyncio.to_thread(slp.probe, host, port)
                 now = time.monotonic()
-                action = tick(STATE, now, probe_result)
+
+                async with STATE_LOCK:
+                    is_current = STATE.armed and STATE.arm_generation == generation
+                    action = tick(STATE, now, probe_result) if is_current else None
 
                 if action is Action.RESTART_MC:
                     error = await asyncio.to_thread(service.restart, unit)
-                    STATE.last_restart_at = time.monotonic()
-                    STATE.restarts_used += 1
-                    if error:
-                        log.warning(
-                            "Watchdog restart of %s failed (attempt %d/%d): %s",
-                            unit,
-                            STATE.restarts_used,
-                            MAX_RESTARTS,
-                            error,
-                        )
-                    else:
-                        log.info(
-                            "Watchdog restarted %s (attempt %d/%d)",
-                            unit,
-                            STATE.restarts_used,
-                            MAX_RESTARTS,
-                        )
+                    async with STATE_LOCK:
+                        if STATE.arm_generation == generation:
+                            STATE.last_restart_at = time.monotonic()
+                            STATE.restarts_used += 1
+                            restarts_used = STATE.restarts_used
+                        else:
+                            restarts_used = None
+                    if restarts_used is not None:
+                        if error:
+                            log.warning(
+                                "Watchdog restart of %s failed (attempt %d/%d): %s",
+                                unit,
+                                restarts_used,
+                                MAX_RESTARTS,
+                                error,
+                            )
+                        else:
+                            log.info(
+                                "Watchdog restarted %s (attempt %d/%d)",
+                                unit,
+                                restarts_used,
+                                MAX_RESTARTS,
+                            )
                 elif action is Action.POWEROFF:
                     log.warning("Watchdog triggering poweroff: Minecraft empty past threshold")
                     error = await asyncio.to_thread(power.system_poweroff)
                     if error:
                         log.error("Watchdog poweroff failed: %s", error)
-                        disarm(STATE, "poweroff_failed")
+                        async with STATE_LOCK:
+                            if STATE.arm_generation == generation:
+                                disarm(STATE, "poweroff_failed")
                 elif action is Action.DISARM_EXPIRED:
-                    disarm(STATE, "expired")
+                    async with STATE_LOCK:
+                        if STATE.arm_generation == generation:
+                            disarm(STATE, "expired")
                     log.info("Watchdog window expired; disarmed")
                 elif action is Action.DISARM_UNRECOVERABLE:
-                    disarm(STATE, "mc_unrecoverable")
-                    log.info(
-                        "Watchdog gave up after %d failed restarts; disarmed",
-                        STATE.restarts_used,
-                    )
+                    async with STATE_LOCK:
+                        if STATE.arm_generation == generation:
+                            disarm(STATE, "mc_unrecoverable")
+                            restarts_used = STATE.restarts_used
+                        else:
+                            restarts_used = None
+                    if restarts_used is not None:
+                        log.info(
+                            "Watchdog gave up after %d failed restarts; disarmed",
+                            restarts_used,
+                        )
+        except Exception:
+            log.exception("Unexpected error in Minecraft watchdog iteration; retrying next tick")
 
         await asyncio.sleep(PROBE_INTERVAL)
