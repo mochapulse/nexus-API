@@ -297,6 +297,9 @@ python -m api.cli <command> [args]
 | `telemetry -j esp` | Print raw JSON (polling) | ESP32 (HTTPS) |
 | `poweroff` | Power off server (with confirmation) | Nexus API |
 | `sleep` | Put server to sleep (with confirmation) | Nexus API |
+| `mc-server active <D> [threshold <T>]` | Arm the Minecraft watchdog | Nexus API |
+| `mc-server disable` | Disarm the Minecraft watchdog | Nexus API |
+| `mc-server status` | Show Minecraft watchdog status | Nexus API |
 
 ### Telemetry TUI
 
@@ -330,6 +333,35 @@ Press `Ctrl+C` to stop.
 
 `wol`, `poweroff`, and `sleep` are blocked when `DEBUG=true` to prevent
 accidental actions during development.
+
+### Minecraft server watchdog
+
+```bash
+nexus-API mc-server active 5h threshold 10m   # arm for 5h, poweroff after 10m empty
+nexus-API mc-server active 1h-30m              # arm for 1h30m, default 30m threshold
+nexus-API mc-server disable                    # disarm now
+nexus-API mc-server status                     # armed?, time left, empty counter, players
+```
+
+Arms a server-side watchdog that restarts Minecraft when it is unreachable
+and powers off the host once it is reachable with 0 players for the
+threshold (default 30m). The watchdog state lives in memory on the Nexus
+host only, so it is always disarmed after a reboot — re-arm it with
+`active` after the server comes back up. Durations use the compact format
+`5h`, `30m`, `1h-30m`. `DEBUG=true` sends no request and prints a
+placeholder response instead, same as `poweroff`/`sleep`. See
+`IMPLEMENT_MC_WATCHDOG.md` for the full design.
+
+**Server-side setup** (once per Nexus host): set `MINECRAFT_PORT` and
+`MINECRAFT_SERVICE` in the server's `api/.env` if they differ from the
+defaults (`25565`, `mc-server-create`), then re-run `./cmd/install.sh` to
+install the polkit rule that lets `nexus-api` restart that one systemd
+unit (or install `/etc/polkit-1/rules.d/20-nexus-mc-server.rules`
+manually — see `cmd/install.sh`), and restart the service:
+
+```bash
+sudo systemctl restart nexus-api
+```
 
 ### CLI Workstation Deploy
 

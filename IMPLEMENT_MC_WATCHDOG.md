@@ -1,6 +1,6 @@
 # Minecraft Server Watchdog — Implementation Idea
 
-Status: **Draft / iterating** — nothing implemented yet.
+Status: **Implemented** on branch chain feat/mc-watchdog-01..04.
 
 ## Goal
 

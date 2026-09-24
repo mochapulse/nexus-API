@@ -18,9 +18,9 @@ api/                    FastAPI backend
   __init__.py           __version__ via git describe + _FALLBACK_VERSION
   main.py               App & route definitions, verify_api_key dependency, lifespan
   cli/                  CLI package (nexus-API command)
-    __init__.py          argparse entry point + command dispatch
+    __init__.py          argparse entry point + command dispatch (incl. mc-server)
     http_client.py       Nexus + ESP HTTP helpers (httpx)
-    commands.py          config, wol, health, poweroff, sleep handlers
+    commands.py          config, wol, health, poweroff, sleep, mc-server handlers
     nexus_tui.py         Textual TUI for Nexus telemetry
     esp_tui.py           Textual TUI for ESP status + plotext charts
     json_output.py       Raw JSON output mode for telemetry
@@ -28,7 +28,7 @@ api/                    FastAPI backend
   config/
     __init__.py          Package docstring
     paths.py             Resolved filesystem paths + ensure_dotenv()
-    runtime.py           APP_NAME, PORT, DEBUG, API_KEY, DUCKDNS_*, NEXUS_*, ESP_*
+    runtime.py           APP_NAME, PORT, DEBUG, API_KEY, DUCKDNS_*, NEXUS_*, ESP_*, MINECRAFT_*
   hw/
     telemetry.py        Real hardware metrics: psutil + NVML + AMD SMI + hwmon + power_supply
     power.py            systemctl poweroff / suspend wrappers
@@ -36,14 +36,25 @@ api/                    FastAPI backend
     utils.py            Async IP detection + DuckDNS updater (httpx)
     state.py            Shared metrics for /health (last_duckdns_update_ms, connectivity_delay_ms)
     duckdns_service.py  Background update loop (lifespan-managed)
+  mc/
+    slp.py              Server List Ping probe (stdlib socket), probe() -> McStatus
+    service.py          is_active()/restart() wrappers over systemctl (with timeout)
+    watchdog.py         Watchdog state dataclass + pure tick() + async loop + arm/disarm/status
   lib/
     templates.py         load_template(name) — reads JSONC, strips comments, returns dict
+    durations.py         parse_duration()/format_duration() — shared by CLI and API (stdlib only)
   test/
     test_auth.py         X-API-Key matrix, public routes, redirects
     test_health.py       Liveness payload, no-store, monotonic uptime
     test_telemetry.py    Payload shape, GPU schema
     test_power.py        DEBUG-gating, production paths, error handling
     test_duckdns.py      DuckDNS utils, service loop, connectivity, state tracking
+    test_durations.py    Duration parser valid/invalid formats
+    test_mc_slp.py       Server List Ping probe
+    test_mc_service.py   systemctl wrappers
+    test_mc_watchdog.py  tick() state machine, arm/disarm/snapshot, polling loop
+    test_mc_endpoints.py mc-server/watchdog endpoints (auth, DEBUG stub, production, 422s)
+    test_cli_mc.py       mc-server CLI parser + cmd_mc_server (DEBUG/production)
   .env.example           Committed template (APP_NAME, PORT, DEBUG, API_KEY)
   .env                   Gitignored local config (ensure_dotenv copies from example)
 conftest.py              Root pytest fixtures (client, auth_headers) + sys.path bootstrap
@@ -56,6 +67,7 @@ cmd/
   deploy-cli-windows.ps1 Deploy CLI workstation on Windows: venv + .env + .cmd shim + user PATH
 daemon/
   nexus-api.service      Systemd unit with hardening (ProtectSystem, PrivateTmp, etc.)
+  mc-server-create.service  Reference copy of the production Minecraft unit (tmux-backed, Type=forking)
 docs/
   conf.py                Sphinx config (autodoc, napoleon, intersphinx, furo)
   index.rst              TOC tree entrypoint
@@ -71,9 +83,15 @@ templates/
   get-telemetry.jsonc    Telemetry data stub (CPU, RAM, GPU, uptime)
   post-poweroff.jsonc    Poweroff triggered stub
   post-sleep.jsonc       Sleep triggered stub
+  get-mc-server-watchdog.jsonc     Watchdog status stub
+  post-mc-server-watchdog.jsonc    Watchdog arm response stub
+  delete-mc-server-watchdog.jsonc  Watchdog disarm response stub
 SERVER_ACCESS.md         Tracked but EMPTY placeholder — keep credentials out of git!
+odd/
+  tasks/                 Organic Driven Development feature task documents
 .github/workflows/
   docs.yml               Sphinx build + GitHub Pages deploy
+IMPLEMENT_MC_WATCHDOG.md Design record for the Minecraft server watchdog feature
 ```
 
 ## Development Commands
@@ -239,6 +257,37 @@ No hardware, DB, or external calls — the endpoint responding IS the liveness
 signal. Note: it sits behind the `X-API-Key` check like every `/api/v1`
 route, so monitoring probes must send the key.
 
+### Minecraft Watchdog (api/mc/, api/lib/durations.py)
+
+`nexus-API mc-server active <D> [threshold <T>] | disable | status` arms a
+server-side watchdog (`api/mc/watchdog.py`) that powers off the Nexus host
+when Minecraft is empty. The loop runs as an asyncio task in `lifespan()`
+(skipped entirely in `DEBUG`) and its state — armed flag, deadline,
+threshold, empty-since, restart count — lives **in memory only**, so a
+reboot or service restart always starts disarmed.
+
+Every 30s while armed: probe Minecraft with a Server List Ping
+(`api/mc/slp.py`, `localhost:MINECRAFT_PORT`). Reachable with 0 players for
+`threshold_seconds` (default 1800s / 30m) triggers `systemctl poweroff`
+(only when reachable **and** empty — an unreachable server never counts as
+empty and never causes a poweroff). Unreachable triggers the recovery
+policy: a 5-minute startup grace after each restart, then
+`systemctl restart $MINECRAFT_SERVICE` (`api/mc/service.py`), capped at 3
+restarts per armed window; after the 3rd failed restart the watchdog
+disarms itself (`last_disarm_reason: "mc_unrecoverable"`) instead of
+retrying forever. The active window expiring also disarms (`"expired"`),
+with no poweroff. The decision logic is the pure function
+`tick(state, now, probe_result, unit_state) -> Action`, so tests never
+sleep, probe a real socket, or call `systemctl`.
+
+`api/lib/durations.py` (`parse_duration`/`format_duration`, stdlib-only) is
+shared by the CLI, which parses user input before sending it, and the API,
+which validates it again server-side. Restarting the `mc-server-create`
+unit needs a polkit rule scoped to exactly that unit and the `start`/
+`restart` verbs (installed by `cmd/install.sh`); never grant
+`manage-units` for all units. See `IMPLEMENT_MC_WATCHDOG.md` for the full
+design record and decisions log.
+
 ### Config Bootstrap
 
 On startup, `api.config.paths.ensure_dotenv()` copies `.env.example` → `.env`
@@ -278,6 +327,8 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 | `ESP_IP` | *(empty)* | ESP32 device IP for WOL and status |
 | `ESP_PORT` | *(empty)* | ESP32 device HTTPS port |
 | `ESP_API_KEY` | *(empty)* | ESP32 API key for `X-API-Key` header |
+| `MINECRAFT_PORT` | `25565` | Minecraft server port for the Server List Ping probe (localhost) |
+| `MINECRAFT_SERVICE` | `mc-server-create` | Systemd unit name the watchdog restarts |
 
 ## CI/CD
 
@@ -312,14 +363,26 @@ Single workflow `docs.yml`:
   via `/api/v1/health` (`last_duckdns_update_ms`, `connectivity_delay_ms`).
   Disabled when `DEBUG=true` or `DUCKDNS_DOMAIN`/`DUCKDNS_TOKEN` are unset.
 - **CLI is live** (`api/cli/`): `nexus-API` command with subcommands for
-  config, WOL, telemetry (Textual TUI with `-j` JSON mode), health, poweroff, and sleep.
+  config, WOL, telemetry (Textual TUI with `-j` JSON mode), health, poweroff,
+  sleep, and mc-server (`active`/`disable`/`status`).
   WOL/poweroff/sleep are DEBUG-gated. Telemetry TUIs use native Textual widgets
   (ProgressBar, Sparkline) and auto-refresh every 2s. ESP TUI includes PlotextPlot
   time-series charts. Cross-platform workstation deploy scripts for Linux and Windows.
   Uses `NEXUS_IP`/`NEXUS_PORT` for Nexus API and `ESP_IP`/`ESP_PORT` for ESP32.
+- **Minecraft server watchdog is live** (`/api/v1/mc-server/watchdog`,
+  `api/mc/`, `nexus-API mc-server`): arms a server-side loop that restarts
+  Minecraft when unreachable and powers off the host when it is reachable
+  with 0 players for the configured threshold. State is in-memory only
+  (always disarmed on boot). `DEBUG=true` never starts the loop and both
+  the CLI and the endpoints return stub payloads instead of sending/acting
+  on real requests. See "Minecraft Watchdog" under Architecture Patterns
+  and `IMPLEMENT_MC_WATCHDOG.md` for the full design.
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **Tests**: pytest suite in `api/test/` (48 tests: auth matrix, health,
-  telemetry shape, power DEBUG-gating, DuckDNS utils and service). Frontend tests: none yet.
+- **Tests**: pytest suite in `api/test/` (194 tests: auth matrix, health,
+  telemetry shape, power DEBUG-gating, DuckDNS utils and service, duration
+  parsing, Minecraft SLP probe and systemd wrappers, watchdog state machine
+  and polling loop, mc-server endpoints, and the mc-server CLI). Frontend
+  tests: none yet.
 - **No frontend-backend integration**: Vite config has no proxy to the API.
