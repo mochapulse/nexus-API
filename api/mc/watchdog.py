@@ -2,7 +2,7 @@
 
 Powers off the Nexus host when the Minecraft server has had no players
 for a configurable threshold, and restarts Minecraft when it stops
-answering the Server List Ping (SLP) probe. See
+answering the status probe (:mod:`api.mc.slp`). See
 ``IMPLEMENT_MC_WATCHDOG.md`` for the full design and decision log.
 
 The decision logic lives in the pure function :func:`tick`, which takes
@@ -20,7 +20,7 @@ event loop, so a plain :class:`asyncio.Lock` is enough — no
 cross-process or multi-worker coordination is needed.
 
 :func:`watchdog_loop` never holds :data:`STATE_LOCK` across blocking
-I/O (the SLP probe, ``systemctl restart``, ``systemctl poweroff``):
+I/O (the status probe, ``systemctl restart``, ``systemctl poweroff``):
 each iteration reads ``armed``/``arm_generation`` under the lock,
 releases it for the I/O, then re-acquires it to compute and apply the
 :func:`tick` decision. Because an HTTP endpoint can disarm or re-arm
@@ -223,7 +223,7 @@ def tick(state: WatchdogState, now: float, probe: slp.McStatus) -> Action:
         state: The watchdog state; ``last_probe`` is updated as a side
             effect so callers/snapshots can report the latest probe.
         now: The current monotonic time (seconds).
-        probe: The result of the latest SLP probe.
+        probe: The result of the latest status probe.
 
     Returns:
         The :class:`Action` the caller should apply.
@@ -311,7 +311,7 @@ async def watchdog_loop(host: str, port: int, unit: str) -> None:
     """Run the watchdog polling loop until the task is cancelled.
 
     Every :data:`PROBE_INTERVAL` seconds, while :data:`STATE` is armed:
-    probes Minecraft via :func:`api.mc.slp.probe` (off the event loop),
+    probes Minecraft via :func:`api.mc.slp.probe` (a native coroutine),
     computes the :class:`Action` via :func:`tick`, and applies it:
 
     - :data:`Action.RESTART_MC`: calls :func:`api.mc.service.restart`
@@ -360,7 +360,7 @@ async def watchdog_loop(host: str, port: int, unit: str) -> None:
                 generation = STATE.arm_generation
 
             if armed:
-                probe_result = await asyncio.to_thread(slp.probe, host, port)
+                probe_result = await slp.probe(host, port)
                 now = time.monotonic()
 
                 async with STATE_LOCK:

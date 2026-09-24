@@ -267,7 +267,9 @@ class TestWatchdogLoop:
 
         with (
             patch.object(watchdog.time, "monotonic", return_value=200.0),
-            patch.object(watchdog.slp, "probe", return_value=_online(0)) as probe,
+            patch.object(
+                watchdog.slp, "probe", new=AsyncMock(return_value=_online(0))
+            ) as probe,
             patch.object(watchdog.service, "restart") as restart,
             patch.object(watchdog.power, "system_poweroff", return_value=None) as poweroff,
             patch.object(
@@ -279,7 +281,7 @@ class TestWatchdogLoop:
             with pytest.raises(asyncio.CancelledError):
                 await watchdog.watchdog_loop("localhost", 25565, "mc-server-create")
 
-        probe.assert_called_once_with("localhost", 25565)
+        probe.assert_awaited_once_with("localhost", 25565)
         poweroff.assert_called_once()
         restart.assert_not_called()
 
@@ -288,7 +290,7 @@ class TestWatchdogLoop:
 
         with (
             patch.object(watchdog.time, "monotonic", return_value=50.0),
-            patch.object(watchdog.slp, "probe", return_value=_offline()),
+            patch.object(watchdog.slp, "probe", new=AsyncMock(return_value=_offline())),
             patch.object(watchdog.service, "restart", return_value=None) as restart,
             patch.object(watchdog.power, "system_poweroff") as poweroff,
             patch.object(
@@ -311,7 +313,7 @@ class TestWatchdogLoop:
 
         with (
             patch.object(watchdog.time, "monotonic", return_value=200.0),
-            patch.object(watchdog.slp, "probe", return_value=_online(0)),
+            patch.object(watchdog.slp, "probe", new=AsyncMock(return_value=_online(0))),
             patch.object(
                 watchdog.power, "system_poweroff", return_value="polkit denied"
             ),
@@ -352,7 +354,9 @@ class TestWatchdogLoop:
         with (
             patch.object(watchdog.time, "monotonic", return_value=50.0),
             patch.object(
-                watchdog.slp, "probe", side_effect=[RuntimeError("boom"), _online(3)]
+                watchdog.slp,
+                "probe",
+                new=AsyncMock(side_effect=[RuntimeError("boom"), _online(3)]),
             ) as probe,
             patch.object(watchdog.service, "restart") as restart,
             patch.object(watchdog.power, "system_poweroff") as poweroff,
@@ -383,7 +387,7 @@ class TestWatchdogLoop:
 
         with (
             patch.object(watchdog.time, "monotonic", return_value=200.0),
-            patch.object(watchdog.slp, "probe", side_effect=_probe_then_disarm),
+            patch.object(watchdog.slp, "probe", new=AsyncMock(side_effect=_probe_then_disarm)),
             patch.object(watchdog.service, "restart") as restart,
             patch.object(watchdog.power, "system_poweroff") as poweroff,
             patch.object(
