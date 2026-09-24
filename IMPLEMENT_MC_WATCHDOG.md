@@ -58,7 +58,7 @@ ARMED    --(3 restarts failed)-----> DISARMED   (mc_unrecoverable, no poweroff)
 
 Loop while ARMED (every `PROBE_INTERVAL` = 30s):
 
-1. Probe MC with Server List Ping on `localhost:MINECRAFT_PORT`.
+1. Probe MC with `mcstatus` (Java status query) on `localhost:MINECRAFT_PORT`.
 2. **Reachable, players > 0** → reset `empty_since = None`.
 3. **Reachable, players == 0** → set `empty_since` if unset.
 4. **Unreachable** → reset `empty_since = None` (an unreachable server is
@@ -105,7 +105,7 @@ Worst case timeline: 3 restarts × 5m grace = the watchdog gives up about
 
 Only a **reachable MC with 0 players for the full threshold** triggers a poweroff.
 
-The **SLP probe is the source of truth**, not `systemctl is-active`
+The **mcstatus probe is the source of truth**, not `systemctl is-active`
 (see the unit file hazards below: systemd can report `active` while MC is dead).
 
 ### Poweroff
@@ -121,7 +121,7 @@ Same rule as the existing power endpoints:
 |------|-----------------------|
 | CLI | Parses and validates the command, prints a placeholder response loaded from a template. **No HTTP request is sent.** |
 | Server endpoints | Return template stubs (`load_template`). |
-| Server loop | Never started. No SLP probe, no `systemctl restart`, no poweroff. |
+| Server loop | Never started. No status probe, no `systemctl restart`, no poweroff. |
 
 ## Duration Format
 
@@ -164,7 +164,7 @@ Status payload:
 
 | Variable | Default | Used by |
 |----------|---------|---------|
-| `MINECRAFT_PORT` | `25565` | Server (SLP probe on localhost) |
+| `MINECRAFT_PORT` | `25565` | Server (mcstatus probe on localhost) |
 | `MINECRAFT_SERVICE` | `mc-server-create` | Server (`systemctl restart <unit>`) |
 
 ## Permissions (polkit)
@@ -205,7 +205,7 @@ Never grant `manage-units` for all units.
 |------|--------|
 | `api/config/runtime.py` | `MINECRAFT_PORT`, `MINECRAFT_SERVICE` |
 | `api/.env.example` | New vars (also dedupe the `ESP_*` keys) |
-| `api/mc/slp.py` | Server List Ping probe (stdlib socket), `probe() -> McStatus` |
+| `api/mc/slp.py` | Minecraft status probe (`mcstatus`), `probe() -> McStatus` |
 | `api/mc/service.py` | `is_active()`, `restart()` wrappers over `systemctl` (with timeout) |
 | `api/mc/watchdog.py` | State dataclass + pure `tick()` + async loop + arm/disarm/status |
 | `api/lib/durations.py` | `parse_duration("1h-30m") -> 5400` (shared by CLI and API) |
@@ -240,3 +240,4 @@ _None — all resolved._
 - **Q6 Grace and cap**: 5m startup grace, max 3 restarts. After the 3rd failed restart, disarm (`mc_unrecoverable`), never poweroff.
 - **Q7 Unit file**: fixed manually on nexus-lan (dedicated tmux socket, ExecStop waits for the save, TimeoutStopSec=120, Restart=on-failure kept). Verified: main PID = `tmux -L mc-server-create` server, Java in the unit cgroup.
 - **Q5 DEBUG**: placeholders everywhere; the CLI sends no request, and the server loop never runs.
+- **Probe uses mcstatus (user request) instead of hand-written SLP**: `api/mc/slp.py` now wraps `mcstatus.JavaServer.async_status()` instead of implementing the Java Edition Server List Ping wire protocol by hand. Same `McStatus`/`probe()` contract; `probe()` is now a coroutine (`async def`), so `watchdog_loop()` awaits it directly instead of via `asyncio.to_thread`.
