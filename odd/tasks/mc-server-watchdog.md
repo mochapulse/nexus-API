@@ -294,11 +294,112 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
     insertions(+), 7 deletions(-).
   - Deviation: none.
 
+## Simplification Pass (2026-09-23)
+
+User request: "Add to requirements.txt mcstatus, and rewrite the code to
+be more simple." Route: direct/delegated ODD work on the already-complete
+feature branch chain (not a new SDD change); single writer, no push/PR.
+
+- **`api/mc/slp.py` rewritten to use `mcstatus`** (installed `mcstatus==14.2.0`,
+  which pulls in `asyncio-dgram==3.0.0`; `dnspython` was already pinned at
+  `2.8.0`, satisfying mcstatus's `>=2.4.2`). Replaces the hand-written Java
+  Edition Server List Ping client (VarInt framing, socket handshake, MOTD
+  chat-component parsing — ~250 lines) with `JavaServer(host, port,
+  timeout=timeout).async_status(tries=1)`. Verified the installed API from
+  source (`venv/lib/python3.14/site-packages/mcstatus/server.py`,
+  `mcstatus/responses/java.py`, `mcstatus/responses/base.py`) rather than
+  guessing: `status.players.online/.max`, `status.version.name`,
+  `status.motd.to_plain()`, `status.latency`. Same `McStatus`/`probe()`
+  contract (kept all fields; only `players_online`/`players_max` are
+  actually consumed by the watchdog, but the rest cost nothing extra
+  through mcstatus and are useful for `status` debugging). `probe()` is
+  now `async def` (mcstatus's `async_status()` is a native coroutine), so
+  `watchdog_loop()` awaits it directly instead of via `asyncio.to_thread`
+  — one fewer thread hop per tick. `requirements-cli.txt` was NOT changed
+  (`rg -n "mcstatus|api\.mc" api/cli` — no matches; the probe is
+  server-side only).
+- **`api/test/test_mc_slp.py` replaced**: 196 lines of VarInt/handshake/
+  buffered-socket test doubles → 80 lines mocking `mcstatus.JavaServer`
+  (5 focused tests: success, connection refused, timeout, protocol error,
+  zero players). No real sockets opened, same as before.
+- **`api/mc/watchdog.py` / `api/test/test_mc_watchdog.py`**: fixed the
+  `asyncio.to_thread(slp.probe, ...)` call site (now `await slp.probe(...)`
+  directly — the double-wrap would have produced an unawaited coroutine)
+  and updated docstrings' SLP references; updated the four loop tests that
+  patched `slp.probe` to use `AsyncMock`. No other watchdog logic changed:
+  the lock/arm_generation race-guard and the `tick()` state machine were
+  judged correct-and-necessary complexity, not over-engineering, so they
+  were left alone.
+- `api/main.py`, `api/cli/*`: no changes needed — neither imports
+  `api.mc.slp` directly or depends on the old SLP contract.
+- Docs: `IMPLEMENT_MC_WATCHDOG.md` (probe section + a new Decisions Log
+  line), `AGENTS.md` (directory map, Minecraft Watchdog section,
+  `MINECRAFT_PORT` description, test count 194 → 175).
+
+### Where each change landed (rebase cascade)
+
+- `refactor(mc): use mcstatus for the server list ping probe` (mcstatus +
+  slp.py + its tests + requirements.txt + `IMPLEMENT_MC_WATCHDOG.md`) →
+  committed on `feat/mc-watchdog-01-foundation`.
+- `git checkout feat/mc-watchdog-04-cli && git rebase --update-refs
+  feat/mc-watchdog-01-foundation` replayed 02/03/04 cleanly except one
+  textual conflict in `IMPLEMENT_MC_WATCHDOG.md`'s Decisions Log (both the
+  01 commit and the original T4 commit appended a line there) — resolved
+  by keeping both lines.
+- `fix(mc): await the mcstatus probe directly` (watchdog.py + its tests)
+  → committed on `feat/mc-watchdog-02-logic`, since the async-probe
+  contract change is a direct consequence of the 01 commit and only
+  affects code that lives on 02.
+- Second `git rebase --update-refs feat/mc-watchdog-02-logic` from
+  `feat/mc-watchdog-04-cli` replayed 03/04 with no conflicts (neither
+  touches `api/mc/slp.py` or `api/mc/watchdog.py`).
+- `chore(odd): record simplification pass` (this entry, AGENTS.md) →
+  committed on `feat/mc-watchdog-04-cli` tip.
+- No changes needed on `feat/mc-watchdog-03-api` — `api/main.py`'s
+  mc-server endpoints only call `mc_watchdog.arm/disarm/snapshot`, never
+  `slp` directly.
+
+### Verification
+
+- `python -m pytest -q`: 100 passed at `feat/mc-watchdog-01-foundation`
+  tip (was 119; SLP test count dropped from 24 to 5); 132 passed at
+  `feat/mc-watchdog-02-logic` tip; 175 passed at
+  `feat/mc-watchdog-03-api` and `feat/mc-watchdog-04-cli` tips (was 194
+  total — the net -19 matches the SLP test rewrite, nothing else changed
+  test count).
+- `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 at every
+  branch tip touched (only the pre-existing `libamd_smi.so` runtime
+  warning from importing `api.hw.telemetry`, same as every prior task).
+- CLI smoke (`api/.env` DEBUG=true, not modified): `python -m api.cli
+  mc-server active 5h threshold 10m` and `... mc-server status` both
+  produce the same DEBUG placeholder output as before (armed/remaining/
+  threshold/players/reachable), exit 0.
+- `rg -n "mcstatus|api\.mc" api/cli`: no matches.
+- Branch chain: `git log --oneline main..feat/mc-watchdog-04-cli` shows
+  15 commits (14 before + this pass's 2 code commits, minus none removed,
+  plus this doc commit = confirmed linear); `git merge-base
+  --is-ancestor <branch> feat/mc-watchdog-04-cli` true for 01/02/03 both
+  before and after each rebase.
+- Slice sizes (`git diff --shortstat <A>..<B>`), before → after:
+  - `main..01-foundation`: 1222 → 902 insertions (**-320**, the mcstatus
+    win).
+  - `01-foundation..02-logic`: 869 → 873 insertions (+4, the
+    to_thread-removal fixup and its test changes).
+  - `02-logic..03-api`: 485 → 485 insertions (unchanged).
+  - `03-api..04-cli`: 931 → 931 insertions (unchanged, before this doc
+    commit).
+  - Total `main..04-cli`: 3493+34d → 3177+34d insertions (**-316** net
+    lines across the whole chain).
+
+Status: **done**. Working tree clean on `feat/mc-watchdog-04-cli` after
+this doc commit. Push/PR remain the user's decision, unchanged from
+before this pass.
+
 ## Next Step
 
-T5 and T6 done on `feat/mc-watchdog-04-cli`. All tasks (T0-T6) complete.
-Next: manual verification on nexus-lan (arm/status/disable via CLI,
-poweroff after an empty threshold, restart after MC is killed) and
-opening the chained PRs (user decision — draft/no-merge tracker PR to
-`main`, then PR1..PR4 per branch, per the `auto-chain` /
-`feature-branch-chain` delivery strategy recorded above).
+T5 and T6 done on `feat/mc-watchdog-04-cli`. All tasks (T0-T6) complete,
+plus the mcstatus simplification pass above. Next: manual verification on
+nexus-lan (arm/status/disable via CLI, poweroff after an empty threshold,
+restart after MC is killed) and opening the chained PRs (user decision —
+draft/no-merge tracker PR to `main`, then PR1..PR4 per branch, per the
+`auto-chain` / `feature-branch-chain` delivery strategy recorded above).

@@ -37,7 +37,7 @@ api/                    FastAPI backend
     state.py            Shared metrics for /health (last_duckdns_update_ms, connectivity_delay_ms)
     duckdns_service.py  Background update loop (lifespan-managed)
   mc/
-    slp.py              Server List Ping probe (stdlib socket), probe() -> McStatus
+    slp.py              Minecraft status probe (mcstatus), probe() -> McStatus
     service.py          is_active()/restart() wrappers over systemctl (with timeout)
     watchdog.py         Watchdog state dataclass + pure tick() + async loop + arm/disarm/status
   lib/
@@ -50,7 +50,7 @@ api/                    FastAPI backend
     test_power.py        DEBUG-gating, production paths, error handling
     test_duckdns.py      DuckDNS utils, service loop, connectivity, state tracking
     test_durations.py    Duration parser valid/invalid formats
-    test_mc_slp.py       Server List Ping probe
+    test_mc_slp.py       Minecraft status probe (mocked mcstatus)
     test_mc_service.py   systemctl wrappers
     test_mc_watchdog.py  tick() state machine, arm/disarm/snapshot, polling loop
     test_mc_endpoints.py mc-server/watchdog endpoints (auth, DEBUG stub, production, 422s)
@@ -266,7 +266,7 @@ when Minecraft is empty. The loop runs as an asyncio task in `lifespan()`
 threshold, empty-since, restart count — lives **in memory only**, so a
 reboot or service restart always starts disarmed.
 
-Every 30s while armed: probe Minecraft with a Server List Ping
+Every 30s while armed: probe Minecraft's status with `mcstatus`
 (`api/mc/slp.py`, `localhost:MINECRAFT_PORT`). Reachable with 0 players for
 `threshold_seconds` (default 1800s / 30m) triggers `systemctl poweroff`
 (only when reachable **and** empty — an unreachable server never counts as
@@ -327,7 +327,7 @@ All filesystem paths are resolved relative to `api/config/paths.py`:
 | `ESP_IP` | *(empty)* | ESP32 device IP for WOL and status |
 | `ESP_PORT` | *(empty)* | ESP32 device HTTPS port |
 | `ESP_API_KEY` | *(empty)* | ESP32 API key for `X-API-Key` header |
-| `MINECRAFT_PORT` | `25565` | Minecraft server port for the Server List Ping probe (localhost) |
+| `MINECRAFT_PORT` | `25565` | Minecraft server port for the mcstatus status probe (localhost) |
 | `MINECRAFT_SERVICE` | `mc-server-create` | Systemd unit name the watchdog restarts |
 
 ## CI/CD
@@ -380,9 +380,9 @@ Single workflow `docs.yml`:
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **Tests**: pytest suite in `api/test/` (194 tests: auth matrix, health,
+- **Tests**: pytest suite in `api/test/` (175 tests: auth matrix, health,
   telemetry shape, power DEBUG-gating, DuckDNS utils and service, duration
-  parsing, Minecraft SLP probe and systemd wrappers, watchdog state machine
-  and polling loop, mc-server endpoints, and the mc-server CLI). Frontend
-  tests: none yet.
+  parsing, Minecraft status probe (mocked mcstatus) and systemd wrappers,
+  watchdog state machine and polling loop, mc-server endpoints, and the
+  mc-server CLI). Frontend tests: none yet.
 - **No frontend-backend integration**: Vite config has no proxy to the API.
