@@ -1,6 +1,10 @@
 // REAL RESPONSE EXAMPLE — GET /api/v1/mc-server/watchdog
-// DEBUG=true  : this exact payload is returned (stub); STATE is never read.
-// Production  : the live watchdog.snapshot(STATE, now) payload, same shape.
+// DEBUG=true  : this exact payload is returned (stub); STATE is never read
+//               and Minecraft is never probed.
+// Production  : probes Minecraft live on every call (armed or not), then
+//               returns watchdog.snapshot(STATE, now, probe) — same shape.
+//               players_max/mc_version/mc_motd/mc_latency_ms are null
+//               whenever mc_reachable is false.
 // last_disarm_reason values: null | "manual" | "expired" | "mc_unrecoverable" |
 //   "poweroff_failed" (systemctl poweroff itself failed, e.g. missing polkit rule)
 {
@@ -10,6 +14,10 @@
   "threshold_seconds": 1800,
   "empty_seconds": 120,
   "players_online": 0,
+  "players_max": 20,
+  "mc_version": "1.20.1",
+  "mc_motd": "Create Chronicles",
+  "mc_latency_ms": 12.3,
   "mc_reachable": true,
   "restarts_used": 0,
   "max_restarts": 3,

@@ -181,11 +181,34 @@ def tick(state: WatchdogState, now: float, probe: slp.McStatus) -> Action:
     return Action.RESTART_MC
 
 
-def snapshot(state: WatchdogState, now: float) -> dict:
-    """Build the status payload described in ``IMPLEMENT_MC_WATCHDOG.md``."""
-    probe = state.last_probe
-    mc_reachable = bool(probe.online) if probe is not None else False
-    players_online = probe.players_online if probe is not None and probe.online else None
+def snapshot(state: WatchdogState, now: float, probe: slp.McStatus | None = None) -> dict:
+    """Build the status payload described in ``IMPLEMENT_MC_WATCHDOG.md``.
+
+    Args:
+        state: The watchdog state to read (``empty_since``/``armed``/
+            ``deadline``/etc. always come from here).
+        now: Monotonic time used for ``remaining_seconds``/``empty_seconds``.
+        probe: When given, this is used for the reachability/player-count/
+            server-metadata fields instead of ``state.last_probe``. This
+            never mutates ``state`` — callers (e.g. a live GET status
+            probe) may pass a probe result without it ever being recorded
+            as ``state.last_probe``, which only :func:`tick` owns. When
+            omitted, behavior is unchanged: ``state.last_probe`` (set by
+            the polling loop) is used, which is ``None`` while disarmed.
+    """
+    effective_probe = probe if probe is not None else state.last_probe
+    mc_reachable = bool(effective_probe.online) if effective_probe is not None else False
+    players_online = (
+        effective_probe.players_online if effective_probe is not None and effective_probe.online else None
+    )
+    players_max = effective_probe.players_max if mc_reachable and effective_probe is not None else None
+    mc_version = effective_probe.version if mc_reachable and effective_probe is not None else None
+    mc_motd = effective_probe.motd if mc_reachable and effective_probe is not None else None
+    mc_latency_ms = (
+        round(effective_probe.latency_ms, 1)
+        if mc_reachable and effective_probe is not None and effective_probe.latency_ms is not None
+        else None
+    )
 
     empty_seconds: int | None = None
     if mc_reachable and players_online == 0 and state.empty_since is not None:
@@ -205,6 +228,10 @@ def snapshot(state: WatchdogState, now: float) -> dict:
         "threshold_seconds": state.threshold_seconds,
         "empty_seconds": empty_seconds,
         "players_online": players_online,
+        "players_max": players_max,
+        "mc_version": mc_version,
+        "mc_motd": mc_motd,
+        "mc_latency_ms": mc_latency_ms,
         "mc_reachable": mc_reachable,
         "restarts_used": state.restarts_used,
         "max_restarts": MAX_RESTARTS,

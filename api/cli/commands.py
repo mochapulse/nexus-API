@@ -280,6 +280,10 @@ def _cmd_mc_server_active(args: argparse.Namespace) -> None:
                 threshold_seconds=threshold_seconds or 1800,
                 empty_seconds=None,
                 players_online=None,
+                players_max=None,
+                mc_version=None,
+                mc_motd=None,
+                mc_latency_ms=None,
                 mc_reachable=False,
             )
         )
@@ -299,6 +303,10 @@ def _cmd_mc_server_disable(args: argparse.Namespace) -> None:
                 remaining_seconds=0,
                 empty_seconds=None,
                 players_online=None,
+                players_max=None,
+                mc_version=None,
+                mc_motd=None,
+                mc_latency_ms=None,
                 mc_reachable=False,
                 last_disarm_reason="manual",
             )
@@ -330,6 +338,10 @@ def _debug_watchdog_payload(**overrides) -> dict:
         "threshold_seconds": 1800,
         "empty_seconds": 120,
         "players_online": 0,
+        "players_max": 20,
+        "mc_version": "1.20.1",
+        "mc_motd": "Create Chronicles",
+        "mc_latency_ms": 12.3,
         "mc_reachable": True,
         "restarts_used": 0,
         "max_restarts": 3,
@@ -373,14 +385,17 @@ def _print_watchdog_status(data: dict) -> None:
     empty_seconds = data.get("empty_seconds")
     mc_reachable = data.get("mc_reachable", False)
     players_online = data.get("players_online")
+    players_max = data.get("players_max")
     reason = data.get("last_disarm_reason")
 
     if not mc_reachable:
-        players_display = "unreachable"
+        players_display = "-"
     elif players_online is None:
         players_display = "-"
-    else:
+    elif players_max is None:
         players_display = str(players_online)
+    else:
+        players_display = f"{players_online}/{players_max}"
 
     print(f"  {'Armed:':<20} {'yes' if armed else 'no'}")
     print(f"  {'Remaining:':<20} {format_duration(remaining) if remaining else '-'}")
@@ -392,6 +407,11 @@ def _print_watchdog_status(data: dict) -> None:
     )
     print(f"  {'Players online:':<20} {players_display}")
     print(f"  {'MC reachable:':<20} {'yes' if mc_reachable else 'no'}")
+    if mc_reachable:
+        latency = data.get("mc_latency_ms")
+        print(f"  {'MC version:':<20} {data.get('mc_version') or '-'}")
+        print(f"  {'MOTD:':<20} {data.get('mc_motd') or '-'}")
+        print(f"  {'Latency:':<20} {f'{latency} ms' if latency is not None else '-'}")
     print(
         f"  {'Restarts:':<20} "
         f"{data.get('restarts_used', 0)}/{data.get('max_restarts', '?')}"

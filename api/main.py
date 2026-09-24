@@ -25,7 +25,7 @@ from api.config.paths import FAVICON_PATH, ensure_dotenv
 from api.lib.templates import load_template
 from api.hw.telemetry import get_system_metrics
 from api.hw.power import system_poweroff, system_sleep
-from api.mc import watchdog as mc_watchdog
+from api.mc import slp, watchdog as mc_watchdog
 from api.mc.watchdog import watchdog_loop
 from api.net import state
 from api.net.duckdns_service import duckdns_loop
@@ -225,14 +225,20 @@ def delete_mc_server_watchdog():
 
 
 @api_v1_router.get("/mc-server/watchdog")
-def get_mc_server_watchdog():
+async def get_mc_server_watchdog():
     """Return the current watchdog status; see
-    :func:`api.mc.watchdog.snapshot` for the payload shape. ``DEBUG``
-    returns a stub template and never touches the watchdog state.
+    :func:`api.mc.watchdog.snapshot` for the payload shape. Unlike
+    POST/DELETE, this performs a live Minecraft probe on every call —
+    armed or not — so status reflects reality even while disarmed,
+    instead of relying on ``state.last_probe``, which the polling loop
+    only sets while armed. The live probe never mutates watchdog state.
+    ``DEBUG`` returns a stub template and never touches the watchdog
+    state or probes anything.
     """
     if runtime.DEBUG:
         return load_template("get-mc-server-watchdog")
-    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic())
+    probe = await slp.probe("localhost", runtime.MINECRAFT_PORT)
+    return mc_watchdog.snapshot(mc_watchdog.STATE, time.monotonic(), probe)
 
 
 @api_v1_router.get("/telemetry")

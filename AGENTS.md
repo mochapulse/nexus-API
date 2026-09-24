@@ -280,6 +280,12 @@ with no poweroff. The decision logic is the pure function
 `tick(state, now, probe_result, unit_state) -> Action`, so tests never
 sleep, probe a real socket, or call `systemctl`.
 
+`GET /api/v1/mc-server/watchdog` always probes Minecraft live (armed or
+not) instead of reusing `state.last_probe`, which the polling loop only
+sets while armed — so status reflects reality even right after boot,
+before anything has armed the watchdog; the live probe never mutates
+`STATE` (`api.mc.watchdog.snapshot`'s optional `probe` argument).
+
 No lock guards the watchdog's in-memory state: the process runs a single
 asyncio event loop, so any span of code with no `await` in it (arm/disarm/
 snapshot/tick, and the HTTP handlers that call them) is already atomic
@@ -389,7 +395,7 @@ Single workflow `docs.yml`:
 - **Frontend is void code**: `App.tsx` returns an empty fragment. `App.css` and
   `index.css` are empty files. No components, no routing, no state, no API
   calls — just a Vite + React + TypeScript skeleton.
-- **Tests**: pytest suite in `api/test/` (175 tests: auth matrix, health,
+- **Tests**: pytest suite in `api/test/` (187 tests: auth matrix, health,
   telemetry shape, power DEBUG-gating, DuckDNS utils and service, duration
   parsing, Minecraft status probe (mocked mcstatus) and systemd wrappers,
   watchdog state machine and polling loop, mc-server endpoints, and the

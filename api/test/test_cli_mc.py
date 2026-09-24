@@ -183,7 +183,8 @@ class TestCmdMcServerProduction:
         )
         out = capsys.readouterr().out
         assert "Armed:" in out
-        assert "unreachable" in out
+        assert "Players online:      -" in out
+        assert "MC version:" not in out
 
     def test_active_sends_threshold_when_given(self, monkeypatch):
         monkeypatch.setattr(runtime, "DEBUG", False)
@@ -251,7 +252,11 @@ class TestCmdMcServerProduction:
             "remaining_seconds": 17820,
             "threshold_seconds": 1800,
             "empty_seconds": 120,
-            "players_online": 0,
+            "players_online": 3,
+            "players_max": 20,
+            "mc_version": "1.20.1",
+            "mc_motd": "Create Chronicles",
+            "mc_latency_ms": 12.3,
             "mc_reachable": True,
             "restarts_used": 0,
             "max_restarts": 3,
@@ -273,10 +278,49 @@ class TestCmdMcServerProduction:
             "Empty for:",
             "Players online:",
             "MC reachable:",
+            "MC version:",
+            "MOTD:",
+            "Latency:",
             "Restarts:",
             "Last disarm reason:",
         ):
             assert field in out
+        assert "3/20" in out
+        assert "12.3 ms" in out
+        assert "Create Chronicles" in out
+
+    def test_status_hides_mc_metadata_when_unreachable(self, monkeypatch, capsys):
+        monkeypatch.setattr(runtime, "DEBUG", False)
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {
+            "armed": False,
+            "deadline": None,
+            "remaining_seconds": 0,
+            "threshold_seconds": 1800,
+            "empty_seconds": None,
+            "players_online": None,
+            "players_max": None,
+            "mc_version": None,
+            "mc_motd": None,
+            "mc_latency_ms": None,
+            "mc_reachable": False,
+            "restarts_used": 0,
+            "max_restarts": 3,
+            "last_disarm_reason": None,
+        }
+        get = MagicMock(return_value=resp)
+        monkeypatch.setattr("api.cli.commands.nexus_get", get)
+
+        args = build_parser().parse_args(["mc-server", "status"])
+        cmd_mc_server(args)
+
+        out = capsys.readouterr().out
+        assert "Players online:      -" in out
+        assert "MC reachable:        no" in out
+        assert "MC version:" not in out
+        assert "MOTD:" not in out
+        assert "Latency:" not in out
 
     def test_invalid_duration_exits_1(self, monkeypatch, capsys):
         monkeypatch.setattr(runtime, "DEBUG", False)
