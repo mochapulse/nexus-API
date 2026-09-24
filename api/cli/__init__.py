@@ -30,21 +30,11 @@ import api.config.runtime as runtime
 
 
 class _ThresholdAction(argparse.Action):
-    """Validate the trailing ``threshold <duration>`` tokens of ``mc-server active``.
-
-    The tokens collected by the ``extra`` argument (``nargs="*"``) must be
-    either empty or exactly the two-element sequence ``["threshold",
-    "<duration>"]``. Anything else is a usage error, reported the same way
-    argparse reports its own errors (via ``parser.error``, which prints to
-    stderr and exits with status 2).
-    """
+    """``extra`` must be empty or exactly ``["threshold", "<duration>"]``."""
 
     def __call__(self, parser, namespace, values, option_string=None):
         if values and (len(values) != 2 or values[0] != "threshold"):
-            parser.error(
-                "mc-server active: expected no extra arguments or exactly "
-                "'threshold <duration>'"
-            )
+            parser.error("mc-server active: expected nothing or 'threshold <duration>'")
         setattr(namespace, self.dest, values)
 
 
@@ -155,11 +145,7 @@ examples:
     mc_server = sub.add_parser(
         "mc-server",
         help="Arm, disarm, or inspect the Minecraft server watchdog.",
-        description=(
-            "Control the server-side Minecraft watchdog: arm it for an "
-            "active window (with an optional empty-threshold override), "
-            "disarm it, or check its status."
-        ),
+        description="Arm the server-side Minecraft watchdog, disarm it, or check its status.",
     )
     # Printed when `mc-server` is invoked with no subcommand.
     mc_server.set_defaults(mc_parser=mc_server)
@@ -168,11 +154,7 @@ examples:
     mc_active = mc_sub.add_parser(
         "active",
         help="Arm the watchdog for a duration, with an optional threshold.",
-        description=(
-            "Arm the watchdog: the host powers off after <duration> unless "
-            "disarmed first, and also after Minecraft is reachable with 0 "
-            "players for <threshold> (default: server default, 30m)."
-        ),
+        description="Power off after <duration>, or sooner once MC is empty for <threshold>.",
         epilog=(
             "examples:\n"
             "  nexus-API mc-server active 5h threshold 10m\n"
@@ -180,33 +162,20 @@ examples:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    mc_active.add_argument(
-        "duration",
-        help="Active window duration, e.g. 5h, 1h-30m, 30m.",
-    )
+    mc_active.add_argument("duration", help="Active window duration, e.g. 5h, 1h-30m, 30m.")
     mc_active.add_argument(
         "extra",
         nargs="*",
         action=_ThresholdAction,
         metavar="threshold <duration>",
-        help=(
-            "Optional 'threshold <duration>' pair overriding the default "
-            "empty-threshold, e.g. threshold 10m."
-        ),
+        help="Optional override for the empty-threshold, e.g. threshold 10m.",
     )
 
-    mc_sub.add_parser(
-        "disable",
-        help="Disarm the watchdog now.",
-        description="Disarm the Minecraft server watchdog immediately.",
-    )
+    mc_sub.add_parser("disable", help="Disarm the watchdog now.")
     mc_sub.add_parser(
         "status",
         help="Show the watchdog status.",
-        description=(
-            "Show whether the watchdog is armed, time remaining, the empty "
-            "counter, player count, and restart/disarm history."
-        ),
+        description="Armed state, time remaining, empty counter, players, restart history.",
     )
 
     return parser

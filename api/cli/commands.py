@@ -227,63 +227,57 @@ def cmd_sleep(args: argparse.Namespace) -> None:
 def cmd_mc_server(args: argparse.Namespace) -> None:
     """Arm, disarm, or inspect the Minecraft server watchdog.
 
-    Dispatches to the ``active`` / ``disable`` / ``status`` subcommand
-    handlers. With no subcommand, prints the ``mc-server`` help and exits
-    with status 1.
-
-    Args:
-        args: Parsed arguments. ``args.mc_command`` selects the
-            subcommand; ``active`` additionally uses ``args.duration``
-            and the optional ``args.extra`` ``["threshold", "<duration>"]``
-            pair (already validated by argparse).
+    Dispatches on ``args.mc_command``; with no subcommand, prints the
+    ``mc-server`` help and exits 1.
     """
-    if args.mc_command == "active":
-        _cmd_mc_server_active(args)
-    elif args.mc_command == "disable":
-        _cmd_mc_server_disable()
-    elif args.mc_command == "status":
-        _cmd_mc_server_status()
-    else:
+    handlers = {
+        "active": _cmd_mc_server_active,
+        "disable": _cmd_mc_server_disable,
+        "status": _cmd_mc_server_status,
+    }
+    handler = handlers.get(args.mc_command)
+    if not handler:
         args.mc_parser.print_help()
         sys.exit(1)
+    handler(args)
+
+
+def _watchdog_request(method, *call_args, **call_kwargs) -> dict:
+    """Call a watchdog HTTP helper (``nexus_post``/``get``/``delete``),
+    print and exit 1 on a network error or non-2xx response, else return
+    the parsed JSON body.
+    """
+    try:
+        resp = method(*call_args, **call_kwargs)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    if resp.status_code // 100 != 2:
+        _print_watchdog_error(resp)
+        sys.exit(1)
+    return resp.json()
 
 
 def _cmd_mc_server_active(args: argparse.Namespace) -> None:
-    """Handle ``mc-server active <duration> [threshold <duration>]``.
-
-    Args:
-        args: Parsed arguments — ``args.duration`` and ``args.extra``.
-    """
+    """Handle ``mc-server active <duration> [threshold <duration>]``."""
     try:
         active_seconds = parse_duration(args.duration)
+        # args.extra is validated by _ThresholdAction: [] or ["threshold", "<duration>"].
+        threshold_seconds = parse_duration(args.extra[1]) if args.extra else None
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-
-    threshold_seconds = None
-    if args.extra:
-        # Validated by _ThresholdAction: exactly ["threshold", "<duration>"].
-        try:
-            threshold_seconds = parse_duration(args.extra[1])
-        except ValueError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            sys.exit(1)
 
     body: dict = {"active_seconds": active_seconds}
     if threshold_seconds is not None:
         body["threshold_seconds"] = threshold_seconds
 
     if runtime.DEBUG:
-        print(
-            "[DEBUG] No request sent. Would POST "
-            f"/api/v1/mc-server/watchdog {body}"
-        )
+        print(f"[DEBUG] No request sent. Would POST /api/v1/mc-server/watchdog {body}")
         _print_watchdog_status(
             _debug_watchdog_payload(
                 remaining_seconds=active_seconds,
-                threshold_seconds=threshold_seconds
-                if threshold_seconds is not None
-                else 1800,
+                threshold_seconds=threshold_seconds or 1800,
                 empty_seconds=None,
                 players_online=None,
                 mc_reachable=False,
@@ -291,20 +285,10 @@ def _cmd_mc_server_active(args: argparse.Namespace) -> None:
         )
         return
 
-    try:
-        resp = nexus_post("mc-server/watchdog", json=body)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    if resp.status_code // 100 != 2:
-        _print_watchdog_error(resp)
-        sys.exit(1)
-
-    _print_watchdog_status(resp.json())
+    _print_watchdog_status(_watchdog_request(nexus_post, "mc-server/watchdog", json=body))
 
 
-def _cmd_mc_server_disable() -> None:
+def _cmd_mc_server_disable(args: argparse.Namespace) -> None:
     """Handle ``mc-server disable``."""
     if runtime.DEBUG:
         print("[DEBUG] No request sent. Would DELETE /api/v1/mc-server/watchdog")
@@ -321,56 +305,23 @@ def _cmd_mc_server_disable() -> None:
         )
         return
 
-    try:
-        resp = nexus_delete("mc-server/watchdog")
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    if resp.status_code // 100 != 2:
-        _print_watchdog_error(resp)
-        sys.exit(1)
-
-    _print_watchdog_status(resp.json())
+    _print_watchdog_status(_watchdog_request(nexus_delete, "mc-server/watchdog"))
 
 
-def _cmd_mc_server_status() -> None:
-    """Handle ``mc-server status``.
-
-    Informational: a successful request exits 0 whether the watchdog is
-    armed or not.
-    """
+def _cmd_mc_server_status(args: argparse.Namespace) -> None:
+    """Handle ``mc-server status`` (exits 0 whether armed or not)."""
     if runtime.DEBUG:
         print("[DEBUG] No request sent. Would GET /api/v1/mc-server/watchdog")
         _print_watchdog_status(_debug_watchdog_payload())
         return
 
-    try:
-        resp = nexus_get("mc-server/watchdog")
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    if resp.status_code // 100 != 2:
-        _print_watchdog_error(resp)
-        sys.exit(1)
-
-    _print_watchdog_status(resp.json())
+    _print_watchdog_status(_watchdog_request(nexus_get, "mc-server/watchdog"))
 
 
 def _debug_watchdog_payload(**overrides) -> dict:
-    """Build a placeholder watchdog status dict for DEBUG mode.
-
-    Mirrors ``templates/get-mc-server-watchdog.jsonc`` (an armed,
-    reachable, briefly-empty server); callers override individual fields
-    to match the command being simulated (e.g. ``disable`` mirrors
-    ``templates/delete-mc-server-watchdog.jsonc``).
-
-    Args:
-        **overrides: Fields to replace in the default payload.
-
-    Returns:
-        The placeholder status dict.
+    """Build a placeholder watchdog status dict for DEBUG mode, mirroring
+    ``templates/get-mc-server-watchdog.jsonc``; callers override fields
+    to match the simulated command (e.g. ``disable``).
     """
     payload = {
         "armed": True,
@@ -389,14 +340,9 @@ def _debug_watchdog_payload(**overrides) -> dict:
 
 
 def _print_watchdog_error(resp) -> None:
-    """Print a failed watchdog response's server detail to stderr.
-
-    FastAPI's 422 validation errors carry ``detail`` as a list of
-    ``{"loc": [...], "msg": ...}`` objects; render those readably instead
-    of dumping the raw list.
-
-    Args:
-        resp: The failed :class:`httpx.Response`.
+    """Print a failed watchdog response's detail to stderr. FastAPI's 422
+    errors carry ``detail`` as a list of ``{"loc": [...], "msg": ...}``;
+    render those readably instead of dumping the raw list.
     """
     try:
         data = resp.json()
@@ -419,14 +365,8 @@ def _print_watchdog_error(resp) -> None:
 
 
 def _print_watchdog_status(data: dict) -> None:
-    """Format and print watchdog status response data.
-
-    Parameters
-    ----------
-    data : dict
-        Parsed JSON response from the ``/api/v1/mc-server/watchdog``
-        ``POST``/``DELETE``/``GET`` endpoints (or a DEBUG placeholder of
-        the same shape).
+    """Print a watchdog status dict (a real response or a DEBUG placeholder,
+    both the same shape) in the CLI's aligned label/value format.
     """
     armed = data.get("armed", False)
     remaining = data.get("remaining_seconds")
