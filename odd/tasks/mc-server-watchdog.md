@@ -53,8 +53,8 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 - [x] T2
 - [x] T3
 - [x] T4
-- [ ] T5
-- [ ] T6
+- [x] T5
+- [x] T6
 
 ## Acceptance Criteria
 
@@ -205,8 +205,100 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
   - Deviation: none beyond the `poweroff_failed` reason already
     recorded under T3 and now reflected in the design doc.
 
+- T5 (`abd2fe5 feat(cli): add mc-server command to arm, disarm and inspect
+  the watchdog`) on `feat/mc-watchdog-04-cli` (parent
+  `feat/mc-watchdog-03-api`):
+  - Files: `api/cli/__init__.py`, `api/cli/commands.py`,
+    `api/cli/http_client.py`, `api/test/test_cli_mc.py`.
+  - `mc-server` subparser added with nested `active`/`disable`/`status`
+    subcommands; `active` takes a positional `duration` plus a
+    `nargs="*"` `extra` argument validated by a custom
+    `_ThresholdAction` (empty, or exactly `["threshold", "<duration>"]`,
+    else `parser.error(...)` — matches argparse's own exit-2 error
+    style). `mc-server` with no subcommand prints its own help and
+    exits 1 (via a `mc_parser` default stashed on the namespace with
+    `set_defaults`).
+  - Dispatch refactor: `cmd_config`, `cmd_wol`, `cmd_health`,
+    `cmd_poweroff`, `cmd_sleep` all now take `args: argparse.Namespace`
+    (documented as unused where applicable); `main()`'s handler dict
+    calls every handler as `handler(args)` uniformly — the
+    telemetry-only special case is gone.
+  - `http_client.nexus_post` gained an optional `json: dict | None`
+    parameter (backward compatible with existing no-body callers);
+    added `nexus_delete(path)` mirroring `nexus_get`/`nexus_post`.
+  - `cmd_mc_server(args)`: validates the duration(s) with
+    `api.lib.durations.parse_duration` first (invalid -> `Error: ...`
+    to stderr, exit 1); in `DEBUG` sends no request and prints a
+    placeholder built inline in Python (`_debug_watchdog_payload`,
+    mirroring the three `templates/*-mc-server-watchdog.jsonc` shapes)
+    through the same `_print_watchdog_status` formatter used for real
+    responses; in production calls `nexus_post`/`nexus_delete`/
+    `nexus_get` with the omitted-when-absent `threshold_seconds` body,
+    and a non-2xx response is rendered by `_print_watchdog_error`
+    (handles FastAPI's list-shaped 422 `detail` readably) then exits 1.
+    `status` exits 0 on any successful request, armed or not.
+  - Verified no CLI-path module imports `orjson`/`fastapi`/`pydantic`/
+    `api.lib.templates` (`rg` over `api/cli/*.py api/lib/durations.py`
+    — no matches); `api.lib.durations` is stdlib-only as required.
+  - `python -m pytest -q`: 194 passed (172 before this task, 22 new in
+    `api/test/test_cli_mc.py`: parser accepted/rejected forms, uniform
+    `handler(args)` dispatch, DEBUG never calling
+    `nexus_post`/`nexus_get`/`nexus_delete` (patched with `MagicMock`),
+    production request shape for `active`/`disable`/`status`, invalid
+    duration and non-2xx exiting 1, network error exiting 1, and the
+    no-subcommand help+exit-1 path).
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (only
+    the pre-existing `libamd_smi.so` runtime warning, same as T1-T4; no
+    new autodoc module, `docs/api.rst` unchanged).
+  - CLI smoke (`api/.env` already existed with `DEBUG=true`, not
+    modified):
+    - `python -m api.cli mc-server active 5h threshold 10m` -> DEBUG
+      placeholder, `Armed: yes`, `Threshold: 10m`, `MC reachable: no`,
+      exit 0.
+    - `python -m api.cli mc-server status` -> DEBUG placeholder,
+      `Threshold: 30m` (server default shown), `Players online: 0`,
+      exit 0.
+    - `python -m api.cli mc-server disable` -> DEBUG placeholder,
+      `Armed: no`, `Last disarm reason: manual`, exit 0.
+    - `python -m api.cli mc-server active 5x` -> `Error: invalid
+      duration '5x': ...`, exit 1.
+  - `git diff --stat` for the T5 commit: 4 files changed, 732
+    insertions(+), 18 deletions(-).
+  - Deviation: none.
+
+- T6 (`955af1a docs: document minecraft watchdog in agents, readme and
+  design`) on `feat/mc-watchdog-04-cli`:
+  - Files: `AGENTS.md`, `README.md`, `IMPLEMENT_MC_WATCHDOG.md`.
+  - `AGENTS.md`: Directory Map gained `api/mc/`, `api/lib/durations.py`,
+    the new `api/test/test_*` files, the three watchdog templates,
+    `daemon/mc-server-create.service`, `odd/tasks/`, and
+    `IMPLEMENT_MC_WATCHDOG.md`; Environment Variables gained
+    `MINECRAFT_PORT`/`MINECRAFT_SERVICE`; Architecture Patterns gained
+    a "Minecraft Watchdog" section (server-side loop, in-memory
+    boot-disarmed state, DEBUG never starting the loop, poweroff only
+    when reachable+empty for the threshold, 5m grace / 3-restart
+    recovery policy, polkit scoped to the one unit); Implementation
+    Status gained the watchdog bullet, the CLI bullet now lists
+    `mc-server`, and the test count was corrected to the observed 194
+    (was stale at 48).
+  - `README.md`: CLI command table gained the three `mc-server` rows; a
+    new "Minecraft server watchdog" subsection under CLI documents the
+    syntax, behavior, and the server-side deployment step (set
+    `MINECRAFT_PORT`/`MINECRAFT_SERVICE`, re-run `cmd/install.sh` or
+    install the polkit rule manually, restart `nexus-api`).
+  - `IMPLEMENT_MC_WATCHDOG.md`: Status line changed from "Draft /
+    iterating — nothing implemented yet" to "Implemented on branch
+    chain feat/mc-watchdog-01..04"; rest of the design record
+    unchanged.
+  - `git diff --stat` for the T6 commit: 3 files changed, 102
+    insertions(+), 7 deletions(-).
+  - Deviation: none.
+
 ## Next Step
 
-T4 done on `feat/mc-watchdog-03-api`. Next: T5 (CLI `mc-server`
-subcommand, dispatch refactor, `nexus_delete` + tests) on
-`feat/mc-watchdog-04-cli`.
+T5 and T6 done on `feat/mc-watchdog-04-cli`. All tasks (T0-T6) complete.
+Next: manual verification on nexus-lan (arm/status/disable via CLI,
+poweroff after an empty threshold, restart after MC is killed) and
+opening the chained PRs (user decision — draft/no-merge tracker PR to
+`main`, then PR1..PR4 per branch, per the `auto-chain` /
+`feature-branch-chain` delivery strategy recorded above).
