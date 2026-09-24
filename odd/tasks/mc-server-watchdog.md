@@ -51,7 +51,7 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 - [x] T0
 - [x] T1
 - [x] T2
-- [ ] T3
+- [x] T3
 - [ ] T4
 - [ ] T5
 - [ ] T6
@@ -89,7 +89,44 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
     (durations 196, mc-style fixup 9/-26, mc module+tests 661, docs/api.rst
     +15 across both).
 
+- T3 (`5716e0c feat(mc): add watchdog state machine and polling loop`) on
+  `feat/mc-watchdog-02-logic` (parent `feat/mc-watchdog-01-foundation`):
+  - Files: `api/mc/watchdog.py`, `api/test/test_mc_watchdog.py`, `docs/api.rst`.
+  - `python -m pytest -q`: 149 passed (119 before this task, 30 new for
+    `test_mc_watchdog.py`: `tick()` boundaries, `arm`/`disarm`/`snapshot`,
+    and the async loop with `slp.probe`/`service.restart`/
+    `power.system_poweroff`/`asyncio.sleep`/`time.monotonic` all patched —
+    no real systemctl, socket, or sleep).
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (stderr
+    only shows the pre-existing `libamd_smi.so` runtime warning from
+    importing `api.hw.telemetry` during autodoc, same as T1/T2, not a
+    Sphinx warning).
+  - `git diff --stat` for the T3 commit: 3 files changed, 714 insertions
+    (`api/mc/watchdog.py` 351, `api/test/test_mc_watchdog.py` 355,
+    `docs/api.rst` +6).
+  - Deviation: `watchdog_loop()` disarms with an extra
+    `last_disarm_reason` value, `"poweroff_failed"`, not listed in
+    `IMPLEMENT_MC_WATCHDOG.md`'s status payload doc, for the case where
+    `systemctl poweroff` itself reports an error (e.g. missing polkit
+    rule). Without it the watchdog would stay armed and re-attempt (and
+    re-fail) the poweroff every 30s tick forever with no way to
+    surface the failure via `status`. Documented in the module
+    docstring; `IMPLEMENT_MC_WATCHDOG.md`'s payload example should be
+    updated when T4 wires the endpoint (tracked here, not fixed
+    retroactively in the design doc since "all decisions are final").
+  - Design choice recorded: `restarts_used` is capped per armed window
+    (only reset by `arm()`), not per outage — matches
+    "`MAX_RESTARTS` per armed window" in the design doc. Confirmed by
+    `test_restarts_used_not_reset_on_recovery`.
+  - Design choice recorded: when both window expiry and the poweroff
+    threshold are due on the same tick, expiry wins (`DISARM_EXPIRED`,
+    no poweroff), per "ARMED --(now >= deadline)--> DISARMED (window
+    expired, no poweroff)" in the design doc's state machine — this is
+    evaluated before the empty/poweroff branch in `tick()`. Confirmed
+    by `test_expiry_beats_poweroff_when_both_due`.
+
 ## Next Step
 
-T1-T2 done on `feat/mc-watchdog-01-foundation`. Next: T3 (`api/mc/watchdog.py`
-state/`tick()`/loop) on `feat/mc-watchdog-02-logic`.
+T3 done on `feat/mc-watchdog-02-logic`. Next: T4 (API endpoints + lifespan,
+runtime config, `.env.example`, templates, polkit in `install.sh` + tests)
+on `feat/mc-watchdog-03-api`.
