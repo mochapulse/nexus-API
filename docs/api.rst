@@ -71,6 +71,11 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: api.mc.watchdog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: api.db
    :members:
    :undoc-members:
