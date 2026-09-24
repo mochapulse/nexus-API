@@ -1,0 +1,21 @@
+// REAL RESPONSE EXAMPLE — POST /api/v1/mc-server/watchdog
+// Body: {"active_seconds": 18000, "threshold_seconds": 1800}
+// DEBUG=true  : the body is still validated (422 on an invalid body), but
+//               this exact stub payload is returned and STATE is never touched.
+// Production  : watchdog.arm(STATE, ...) then the live snapshot() payload,
+//               freshly armed — no probe has run yet, so mc_reachable is
+//               false and players_online/empty_seconds are null.
+// last_disarm_reason values: null | "manual" | "expired" | "mc_unrecoverable" |
+//   "poweroff_failed" (systemctl poweroff itself failed, e.g. missing polkit rule)
+{
+  "armed": true,
+  "deadline": "2026-09-24T04:00:00Z",
+  "remaining_seconds": 18000,
+  "threshold_seconds": 1800,
+  "empty_seconds": null,
+  "players_online": null,
+  "mc_reachable": false,
+  "restarts_used": 0,
+  "max_restarts": 3,
+  "last_disarm_reason": null
+}

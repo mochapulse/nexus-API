@@ -36,6 +36,11 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: api.lib.durations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: api.hw
    :members:
    :undoc-members:
@@ -47,6 +52,26 @@ API Reference
    :show-inheritance:
 
 .. automodule:: api.hw.power
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc.slp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc.service
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc.watchdog
    :members:
    :undoc-members:
    :show-inheritance:

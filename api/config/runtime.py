@@ -27,6 +27,12 @@ ESP_PORT : str
     ESP32 device HTTPS port, default ``""``.
 ESP_API_KEY : str
     ESP32 API key for ``X-API-Key`` header, default ``""``.
+MINECRAFT_PORT : int
+    Minecraft server port probed by the watchdog on ``localhost``,
+    default ``25565``.
+MINECRAFT_SERVICE : str
+    Systemd unit name the watchdog restarts on recovery, default
+    ``"mc-server-create"``.
 """
 
 import os
@@ -47,3 +53,5 @@ NEXUS_PORT = int(os.getenv("NEXUS_PORT", "8000"))
 ESP_IP = os.getenv("ESP_IP", "")
 ESP_PORT = os.getenv("ESP_PORT", "")
 ESP_API_KEY = os.getenv("ESP_API_KEY", "")
+MINECRAFT_PORT = int(os.getenv("MINECRAFT_PORT", "25565"))
+MINECRAFT_SERVICE = os.getenv("MINECRAFT_SERVICE", "mc-server-create")

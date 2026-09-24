@@ -16,6 +16,10 @@ if [[ "${1:-}" == "-dev" ]]; then
     DEV_MODE=true
 fi
 
+# Systemd unit the Minecraft watchdog is allowed to start/restart via
+# polkit. Override to point at a different unit name if needed.
+MC_UNIT="${MC_UNIT:-mc-server-create.service}"
+
 PROJECT_ROOT="$( cd -P "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd )"
 VENV_DIR="$PROJECT_ROOT/venv"
 REQUIREMENTS_FILE="$PROJECT_ROOT/requirements.txt"
@@ -59,9 +63,27 @@ polkit.addRule(function(action, subject) {
 EOF
 
     sudo chmod 644 "$RULE_FILE"
+
+    MC_RULE_FILE="/etc/polkit-1/rules.d/20-nexus-mc-server.rules"
+
+    echo "Creating Polkit rule at ${MC_RULE_FILE} for unit '${MC_UNIT}', user '${SERVICE_USER}'..."
+
+    # Note: EOF is unquoted so ${MC_UNIT}/${SERVICE_USER} expand inside the heredoc
+    sudo tee "$MC_RULE_FILE" > /dev/null << EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        action.lookup("unit") == "${MC_UNIT}" &&
+        (action.lookup("verb") == "start" || action.lookup("verb") == "restart") &&
+        subject.user == "${SERVICE_USER}") {
+        return polkit.Result.YES;
+    }
+});
+EOF
+
+    sudo chmod 644 "$MC_RULE_FILE"
     sudo systemctl restart polkit
 
-    echo "Polkit rule deployed and polkit service restarted."
+    echo "Polkit rules deployed and polkit service restarted."
 fi
 
 if ! $DEV_MODE; then
