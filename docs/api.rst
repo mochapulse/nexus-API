@@ -56,6 +56,21 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: api.mc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc.slp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: api.mc.service
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: api.db
    :members:
    :undoc-members:
