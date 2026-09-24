@@ -48,9 +48,9 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 
 ## Checklist
 
-- [ ] T0
-- [ ] T1
-- [ ] T2
+- [x] T0
+- [x] T1
+- [x] T2
 - [ ] T3
 - [ ] T4
 - [ ] T5
@@ -64,8 +64,32 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 
 ## Progress / Evidence
 
-_(commit IDs and check results per task)_
+- Environment: no venv existed; created with local `python3` (3.14.4), `pip install -r requirements.txt` succeeded with no failures (no Python-version fallback needed).
+- Baseline (before T1/T2): `python -m pytest -q` -> 48 passed.
+- T1 (`92daac2 feat(lib): add duration parser for watchdog windows`, followed by
+  `ba96616 style(lib): use Google-style docstrings in durations module` — fixed
+  numpy-style docstrings to match `napoleon_google_docstring = True` in
+  `docs/conf.py` and the AGENTS.md convention):
+  - Files: `api/lib/durations.py`, `api/test/test_durations.py`, `docs/api.rst`.
+  - `python -m pytest -q`: 85 passed.
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (stderr only
+    shows the pre-existing `libamd_smi.so` runtime warning from importing
+    `api.hw.telemetry` during autodoc, not a Sphinx warning).
+- T2 (`ec3bfdb feat(mc): add server list ping probe and systemd unit control`):
+  - Files: `api/mc/__init__.py`, `api/mc/slp.py`, `api/mc/service.py`,
+    `api/test/test_mc_slp.py`, `api/test/test_mc_service.py`, `docs/api.rst`.
+  - `python -m pytest -q`: 119 passed.
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 after removing
+    the napoleon `Attributes:` docstring section on `McStatus` (a dataclass's
+    fields plus a napoleon `Attributes:` block both register as
+    `py:attribute` objects with the same qualified name, which `-W` turns
+    into a fatal "duplicate object description" error — rewrote the
+    docstring as prose instead).
+  - `git diff --stat` for the T1+T2 slice: 8 files changed, ~857 insertions
+    (durations 196, mc-style fixup 9/-26, mc module+tests 661, docs/api.rst
+    +15 across both).
 
 ## Next Step
 
-T0 commit on `feat/mc-watchdog-01-foundation`, then T1-T2 (delegated writer).
+T1-T2 done on `feat/mc-watchdog-01-foundation`. Next: T3 (`api/mc/watchdog.py`
+state/`tick()`/loop) on `feat/mc-watchdog-02-logic`.
