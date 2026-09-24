@@ -7,8 +7,10 @@ Functions
 ---------
 nexus_get(path)
     GET against the Nexus API server.
-nexus_post(path)
-    POST against the Nexus API server.
+nexus_post(path, json=None)
+    POST against the Nexus API server, with an optional JSON body.
+nexus_delete(path)
+    DELETE against the Nexus API server.
 esp_get(path)
     GET against the ESP32 device (HTTPS, verify=False).
 esp_post(path)
@@ -44,7 +46,7 @@ def nexus_get(path: str) -> httpx.Response:
     )
 
 
-def nexus_post(path: str) -> httpx.Response:
+def nexus_post(path: str, json: dict | None = None) -> httpx.Response:
     """POST ``/api/v1/{path}`` on the Nexus API server.
 
     Parameters
@@ -52,11 +54,34 @@ def nexus_post(path: str) -> httpx.Response:
     path : str
         Endpoint path without the ``/api/v1`` prefix
         (e.g. ``"power/poweroff"``).
+    json : dict | None
+        Optional JSON request body. Omitted (``None``) sends no body,
+        matching the existing no-argument callers.
 
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
     return httpx.post(
+        f"{_NEXUS_BASE}/{path}",
+        headers={"X-API-Key": runtime.API_KEY},
+        json=json,
+        timeout=_NEXUS_TIMEOUT,
+    )
+
+
+def nexus_delete(path: str) -> httpx.Response:
+    """DELETE ``/api/v1/{path}`` on the Nexus API server.
+
+    Parameters
+    ----------
+    path : str
+        Endpoint path without the ``/api/v1`` prefix
+        (e.g. ``"mc-server/watchdog"``).
+
+    Returns:
+        :class:`httpx.Response` — caller should handle status codes.
+    """
+    return httpx.delete(
         f"{_NEXUS_BASE}/{path}",
         headers={"X-API-Key": runtime.API_KEY},
         timeout=_NEXUS_TIMEOUT,

@@ -53,8 +53,8 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 - [x] T2
 - [x] T3
 - [x] T4
-- [ ] T5
-- [ ] T6
+- [x] T5
+- [x] T6
 
 ## Acceptance Criteria
 
@@ -205,8 +205,346 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
   - Deviation: none beyond the `poweroff_failed` reason already
     recorded under T3 and now reflected in the design doc.
 
+- T5 (`abd2fe5 feat(cli): add mc-server command to arm, disarm and inspect
+  the watchdog`) on `feat/mc-watchdog-04-cli` (parent
+  `feat/mc-watchdog-03-api`):
+  - Files: `api/cli/__init__.py`, `api/cli/commands.py`,
+    `api/cli/http_client.py`, `api/test/test_cli_mc.py`.
+  - `mc-server` subparser added with nested `active`/`disable`/`status`
+    subcommands; `active` takes a positional `duration` plus a
+    `nargs="*"` `extra` argument validated by a custom
+    `_ThresholdAction` (empty, or exactly `["threshold", "<duration>"]`,
+    else `parser.error(...)` — matches argparse's own exit-2 error
+    style). `mc-server` with no subcommand prints its own help and
+    exits 1 (via a `mc_parser` default stashed on the namespace with
+    `set_defaults`).
+  - Dispatch refactor: `cmd_config`, `cmd_wol`, `cmd_health`,
+    `cmd_poweroff`, `cmd_sleep` all now take `args: argparse.Namespace`
+    (documented as unused where applicable); `main()`'s handler dict
+    calls every handler as `handler(args)` uniformly — the
+    telemetry-only special case is gone.
+  - `http_client.nexus_post` gained an optional `json: dict | None`
+    parameter (backward compatible with existing no-body callers);
+    added `nexus_delete(path)` mirroring `nexus_get`/`nexus_post`.
+  - `cmd_mc_server(args)`: validates the duration(s) with
+    `api.lib.durations.parse_duration` first (invalid -> `Error: ...`
+    to stderr, exit 1); in `DEBUG` sends no request and prints a
+    placeholder built inline in Python (`_debug_watchdog_payload`,
+    mirroring the three `templates/*-mc-server-watchdog.jsonc` shapes)
+    through the same `_print_watchdog_status` formatter used for real
+    responses; in production calls `nexus_post`/`nexus_delete`/
+    `nexus_get` with the omitted-when-absent `threshold_seconds` body,
+    and a non-2xx response is rendered by `_print_watchdog_error`
+    (handles FastAPI's list-shaped 422 `detail` readably) then exits 1.
+    `status` exits 0 on any successful request, armed or not.
+  - Verified no CLI-path module imports `orjson`/`fastapi`/`pydantic`/
+    `api.lib.templates` (`rg` over `api/cli/*.py api/lib/durations.py`
+    — no matches); `api.lib.durations` is stdlib-only as required.
+  - `python -m pytest -q`: 194 passed (172 before this task, 22 new in
+    `api/test/test_cli_mc.py`: parser accepted/rejected forms, uniform
+    `handler(args)` dispatch, DEBUG never calling
+    `nexus_post`/`nexus_get`/`nexus_delete` (patched with `MagicMock`),
+    production request shape for `active`/`disable`/`status`, invalid
+    duration and non-2xx exiting 1, network error exiting 1, and the
+    no-subcommand help+exit-1 path).
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (only
+    the pre-existing `libamd_smi.so` runtime warning, same as T1-T4; no
+    new autodoc module, `docs/api.rst` unchanged).
+  - CLI smoke (`api/.env` already existed with `DEBUG=true`, not
+    modified):
+    - `python -m api.cli mc-server active 5h threshold 10m` -> DEBUG
+      placeholder, `Armed: yes`, `Threshold: 10m`, `MC reachable: no`,
+      exit 0.
+    - `python -m api.cli mc-server status` -> DEBUG placeholder,
+      `Threshold: 30m` (server default shown), `Players online: 0`,
+      exit 0.
+    - `python -m api.cli mc-server disable` -> DEBUG placeholder,
+      `Armed: no`, `Last disarm reason: manual`, exit 0.
+    - `python -m api.cli mc-server active 5x` -> `Error: invalid
+      duration '5x': ...`, exit 1.
+  - `git diff --stat` for the T5 commit: 4 files changed, 732
+    insertions(+), 18 deletions(-).
+  - Deviation: none.
+
+- T6 (`955af1a docs: document minecraft watchdog in agents, readme and
+  design`) on `feat/mc-watchdog-04-cli`:
+  - Files: `AGENTS.md`, `README.md`, `IMPLEMENT_MC_WATCHDOG.md`.
+  - `AGENTS.md`: Directory Map gained `api/mc/`, `api/lib/durations.py`,
+    the new `api/test/test_*` files, the three watchdog templates,
+    `daemon/mc-server-create.service`, `odd/tasks/`, and
+    `IMPLEMENT_MC_WATCHDOG.md`; Environment Variables gained
+    `MINECRAFT_PORT`/`MINECRAFT_SERVICE`; Architecture Patterns gained
+    a "Minecraft Watchdog" section (server-side loop, in-memory
+    boot-disarmed state, DEBUG never starting the loop, poweroff only
+    when reachable+empty for the threshold, 5m grace / 3-restart
+    recovery policy, polkit scoped to the one unit); Implementation
+    Status gained the watchdog bullet, the CLI bullet now lists
+    `mc-server`, and the test count was corrected to the observed 194
+    (was stale at 48).
+  - `README.md`: CLI command table gained the three `mc-server` rows; a
+    new "Minecraft server watchdog" subsection under CLI documents the
+    syntax, behavior, and the server-side deployment step (set
+    `MINECRAFT_PORT`/`MINECRAFT_SERVICE`, re-run `cmd/install.sh` or
+    install the polkit rule manually, restart `nexus-api`).
+  - `IMPLEMENT_MC_WATCHDOG.md`: Status line changed from "Draft /
+    iterating — nothing implemented yet" to "Implemented on branch
+    chain feat/mc-watchdog-01..04"; rest of the design record
+    unchanged.
+  - `git diff --stat` for the T6 commit: 3 files changed, 102
+    insertions(+), 7 deletions(-).
+  - Deviation: none.
+
+## Simplification Pass (2026-09-23)
+
+User request: "Add to requirements.txt mcstatus, and rewrite the code to
+be more simple." Route: direct/delegated ODD work on the already-complete
+feature branch chain (not a new SDD change); single writer, no push/PR.
+
+- **`api/mc/slp.py` rewritten to use `mcstatus`** (installed `mcstatus==14.2.0`,
+  which pulls in `asyncio-dgram==3.0.0`; `dnspython` was already pinned at
+  `2.8.0`, satisfying mcstatus's `>=2.4.2`). Replaces the hand-written Java
+  Edition Server List Ping client (VarInt framing, socket handshake, MOTD
+  chat-component parsing — ~250 lines) with `JavaServer(host, port,
+  timeout=timeout).async_status(tries=1)`. Verified the installed API from
+  source (`venv/lib/python3.14/site-packages/mcstatus/server.py`,
+  `mcstatus/responses/java.py`, `mcstatus/responses/base.py`) rather than
+  guessing: `status.players.online/.max`, `status.version.name`,
+  `status.motd.to_plain()`, `status.latency`. Same `McStatus`/`probe()`
+  contract (kept all fields; only `players_online`/`players_max` are
+  actually consumed by the watchdog, but the rest cost nothing extra
+  through mcstatus and are useful for `status` debugging). `probe()` is
+  now `async def` (mcstatus's `async_status()` is a native coroutine), so
+  `watchdog_loop()` awaits it directly instead of via `asyncio.to_thread`
+  — one fewer thread hop per tick. `requirements-cli.txt` was NOT changed
+  (`rg -n "mcstatus|api\.mc" api/cli` — no matches; the probe is
+  server-side only).
+- **`api/test/test_mc_slp.py` replaced**: 196 lines of VarInt/handshake/
+  buffered-socket test doubles → 80 lines mocking `mcstatus.JavaServer`
+  (5 focused tests: success, connection refused, timeout, protocol error,
+  zero players). No real sockets opened, same as before.
+- **`api/mc/watchdog.py` / `api/test/test_mc_watchdog.py`**: fixed the
+  `asyncio.to_thread(slp.probe, ...)` call site (now `await slp.probe(...)`
+  directly — the double-wrap would have produced an unawaited coroutine)
+  and updated docstrings' SLP references; updated the four loop tests that
+  patched `slp.probe` to use `AsyncMock`. No other watchdog logic changed:
+  the lock/arm_generation race-guard and the `tick()` state machine were
+  judged correct-and-necessary complexity, not over-engineering, so they
+  were left alone.
+- `api/main.py`, `api/cli/*`: no changes needed — neither imports
+  `api.mc.slp` directly or depends on the old SLP contract.
+- Docs: `IMPLEMENT_MC_WATCHDOG.md` (probe section + a new Decisions Log
+  line), `AGENTS.md` (directory map, Minecraft Watchdog section,
+  `MINECRAFT_PORT` description, test count 194 → 175).
+
+### Where each change landed (rebase cascade)
+
+- `refactor(mc): use mcstatus for the server list ping probe` (mcstatus +
+  slp.py + its tests + requirements.txt + `IMPLEMENT_MC_WATCHDOG.md`) →
+  committed on `feat/mc-watchdog-01-foundation`.
+- `git checkout feat/mc-watchdog-04-cli && git rebase --update-refs
+  feat/mc-watchdog-01-foundation` replayed 02/03/04 cleanly except one
+  textual conflict in `IMPLEMENT_MC_WATCHDOG.md`'s Decisions Log (both the
+  01 commit and the original T4 commit appended a line there) — resolved
+  by keeping both lines.
+- `fix(mc): await the mcstatus probe directly` (watchdog.py + its tests)
+  → committed on `feat/mc-watchdog-02-logic`, since the async-probe
+  contract change is a direct consequence of the 01 commit and only
+  affects code that lives on 02.
+- Second `git rebase --update-refs feat/mc-watchdog-02-logic` from
+  `feat/mc-watchdog-04-cli` replayed 03/04 with no conflicts (neither
+  touches `api/mc/slp.py` or `api/mc/watchdog.py`).
+- `chore(odd): record simplification pass` (this entry, AGENTS.md) →
+  committed on `feat/mc-watchdog-04-cli` tip.
+- No changes needed on `feat/mc-watchdog-03-api` — `api/main.py`'s
+  mc-server endpoints only call `mc_watchdog.arm/disarm/snapshot`, never
+  `slp` directly.
+
+### Verification
+
+- `python -m pytest -q`: 100 passed at `feat/mc-watchdog-01-foundation`
+  tip (was 119; SLP test count dropped from 24 to 5); 132 passed at
+  `feat/mc-watchdog-02-logic` tip; 175 passed at
+  `feat/mc-watchdog-03-api` and `feat/mc-watchdog-04-cli` tips (was 194
+  total — the net -19 matches the SLP test rewrite, nothing else changed
+  test count).
+- `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 at every
+  branch tip touched (only the pre-existing `libamd_smi.so` runtime
+  warning from importing `api.hw.telemetry`, same as every prior task).
+- CLI smoke (`api/.env` DEBUG=true, not modified): `python -m api.cli
+  mc-server active 5h threshold 10m` and `... mc-server status` both
+  produce the same DEBUG placeholder output as before (armed/remaining/
+  threshold/players/reachable), exit 0.
+- `rg -n "mcstatus|api\.mc" api/cli`: no matches.
+- Branch chain: `git log --oneline main..feat/mc-watchdog-04-cli` shows
+  15 commits (14 before + this pass's 2 code commits, minus none removed,
+  plus this doc commit = confirmed linear); `git merge-base
+  --is-ancestor <branch> feat/mc-watchdog-04-cli` true for 01/02/03 both
+  before and after each rebase.
+- Slice sizes (`git diff --shortstat <A>..<B>`), before → after:
+  - `main..01-foundation`: 1222 → 902 insertions (**-320**, the mcstatus
+    win).
+  - `01-foundation..02-logic`: 869 → 873 insertions (+4, the
+    to_thread-removal fixup and its test changes).
+  - `02-logic..03-api`: 485 → 485 insertions (unchanged).
+  - `03-api..04-cli`: 931 → 931 insertions (unchanged, before this doc
+    commit).
+  - Total `main..04-cli`: 3493+34d → 3177+34d insertions (**-316** net
+    lines across the whole chain).
+
+Status: **done**. Working tree clean on `feat/mc-watchdog-04-cli` after
+this doc commit. Push/PR remain the user's decision, unchanged from
+before this pass.
+
+## Simplification Pass 2 (2026-09-23)
+
+User request: "rewrite the code to be more simple" (after pass 1's
+mcstatus swap left the rest of the feature untouched). Route: direct/
+delegated ODD work on the already-complete branch chain; single writer,
+no push/PR.
+
+- **`api/mc/watchdog.py`**: removed `STATE_LOCK` (`asyncio.Lock`)
+  entirely. It never protected anything real: this process runs a
+  single asyncio event loop, so any span of code with no `await` in it
+  — every function here except `watchdog_loop`, and every HTTP handler
+  in `api.main` — already runs atomically with respect to every other
+  coroutine. The one real race, `watchdog_loop`'s blocking probe/
+  restart/poweroff calls crossing an `await`, was already guarded (and
+  still is) by re-checking `arm_generation` on the other side; that
+  guard is kept and now also re-checks `STATE.armed` before applying a
+  `tick()` decision, matching the old lock-based `is_current` check.
+  Collapsed the per-action lock/re-lock dance into straight-line code
+  and trimmed the module and function docstrings. `tick()`'s decision
+  matrix, `arm`/`disarm`/`snapshot`, the `STATE` singleton, and the 30s
+  loop are otherwise unchanged — recorded as correct-and-necessary
+  complexity in pass 1 and confirmed again here.
+  Documented in `IMPLEMENT_MC_WATCHDOG.md`'s Decisions Log and
+  `AGENTS.md`'s Minecraft Watchdog section.
+- **`api/main.py`**: the three `mc-server/watchdog` endpoints no longer
+  do `async with mc_watchdog.STATE_LOCK: ...` (the lock is gone); they
+  call `arm`/`disarm`/`snapshot` directly and are now plain `def`
+  (no `await` left in their bodies). Docstrings trimmed to what Swagger
+  needs.
+- **`api/lib/durations.py`**: `parse_duration`'s four near-identical
+  `raise ValueError(...)` blocks collapsed into two, using a shared
+  `_USAGE` string and combining the dangling-dash/empty-groups checks
+  with the regex match. Same accepted/rejected format matrix (verified
+  by the existing parametrized test suite, unchanged).
+- **`api/cli/commands.py`**: the three `active`/`disable`/`status`
+  handlers' near-identical try/except + status-code-check + print
+  blocks collapsed into one `_watchdog_request(method, *args, **kwargs)`
+  helper. `cmd_mc_server` dispatches via a `handlers` dict instead of
+  if/elif; `_cmd_mc_server_disable`/`_cmd_mc_server_status` now also
+  take `args` (unused) for a fully uniform `handler(args)` signature
+  matching the other CLI commands. Docstrings trimmed throughout the
+  mc-server section.
+- **`api/cli/__init__.py`**: `_ThresholdAction`'s docstring trimmed to
+  one line; the `mc-server`/`active`/`status` subparsers' `help`/
+  `description` strings shortened (kept the `active` epilog's two usage
+  examples). The custom `argparse.Action` itself was kept (not replaced
+  with plain `nargs` validation) because the CLI's fixed syntax
+  (`mc-server active <D> [threshold <T>]`, no `--` flags, per
+  `IMPLEMENT_MC_WATCHDOG.md`, final) requires `parser.error()`-style
+  exit-2 errors for malformed extra tokens, which only a custom
+  `Action` (or an equivalent `type=` callback) can produce during
+  `parse_args()` itself; validating in the command handler instead
+  would have changed the exit code to 1, a behavior change forbidden by
+  scope.
+- Behavior unchanged throughout: same CLI syntax, same exit codes, same
+  DEBUG placeholder output, same endpoint payloads and status codes,
+  same duration parsing rules. No tests were deleted; none needed
+  removal since no public behavior or internal helper was removed, only
+  simplified in place.
+
+### Where each change landed (rebase cascade)
+
+- `refactor(lib): simplify duration parsing error handling` →
+  `feat/mc-watchdog-01-foundation`.
+- `git checkout feat/mc-watchdog-04-cli && git rebase --update-refs
+  feat/mc-watchdog-01-foundation` replayed 02/03/04 with no conflicts.
+- `refactor(mc): drop the watchdog STATE_LOCK and trim docstrings` →
+  `feat/mc-watchdog-02-logic`.
+- `git rebase --update-refs feat/mc-watchdog-02-logic` (from 04)
+  replayed 03/04 with no conflicts.
+- `refactor(api): drop STATE_LOCK usage and trim mc-server endpoint
+  docs` → `feat/mc-watchdog-03-api` (committed immediately after the
+  rebase above, since 03's `main.py` referenced the now-removed
+  `STATE_LOCK` and the test suite was red until this landed — confirmed
+  red-then-green: 6 failing on `AttributeError:
+  module 'api.mc.watchdog' has no attribute 'STATE_LOCK'`, then 153
+  passed after this commit).
+- `git rebase --update-refs feat/mc-watchdog-03-api` (from 04) replayed
+  04 with no conflicts.
+- `refactor(cli): simplify mc-server command handling and help text` →
+  `feat/mc-watchdog-04-cli` tip (commands.py + `__init__.py`).
+- This doc entry + `AGENTS.md`'s no-lock note + the Decisions Log line
+  in `IMPLEMENT_MC_WATCHDOG.md` → final `chore(odd): ...` commit on
+  `feat/mc-watchdog-04-cli` tip.
+
+### Verification
+
+- `python -m pytest -q` at every changed branch tip: 100 passed at
+  `01-foundation` (unchanged from pass 1's baseline — this pass only
+  touched `durations.py`, which has no test-count-changing behavior
+  change); 132 passed at `02-logic` (unchanged); 153 passed at
+  `03-api` (unchanged); 175 passed at `04-cli` (unchanged) — this pass
+  removed no tests and added none, only simplified implementations
+  behind the same test surface.
+- `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 at the
+  `04-cli` tip (only the pre-existing `libamd_smi.so` runtime warning).
+- CLI smoke (`api/.env` `DEBUG=true`, not modified), all at the
+  `04-cli` tip:
+  - `python -m api.cli mc-server active 5h threshold 10m` → DEBUG
+    placeholder, `Armed: yes`, `Threshold: 10m`, exit 0.
+  - `python -m api.cli mc-server active 1h-30m` → DEBUG placeholder,
+    `Remaining: 1h 30m`, `Threshold: 30m` (default), exit 0.
+  - `python -m api.cli mc-server status` → DEBUG placeholder, exit 0.
+  - `python -m api.cli mc-server disable` → DEBUG placeholder,
+    `Armed: no`, `Last disarm reason: manual`, exit 0.
+  - `python -m api.cli mc-server active 5x` → `Error: invalid duration
+    '5x': ...`, exit 1.
+  - `python -m api.cli mc-server active 5h threshold` → argparse usage
+    + `error: mc-server active: expected nothing or 'threshold
+    <duration>'`, exit 2.
+- `rg -n "mcstatus|api\.mc|orjson|fastapi|pydantic" api/cli`: no
+  matches, at the `04-cli` tip.
+- `git log --oneline main..feat/mc-watchdog-04-cli`: linear, 20 commits
+  before this doc entry's own commit (21 after) — 4 new code commits
+  from this pass (durations, watchdog, main.py, CLI) on top of the 16
+  from T0-T6 and simplification pass 1; `git merge-base --is-ancestor
+  <branch> feat/mc-watchdog-04-cli` true for 01/02/03 after every
+  rebase.
+- Line counts (`wc -l`), before this pass → after:
+  - `api/mc/watchdog.py`: 423 → 275 (-148).
+  - `api/cli/commands.py`: 459 → 399 (-60).
+  - `api/cli/__init__.py`: 260 → 229 (-31).
+  - `api/lib/durations.py`: 101 → 67 (-34).
+  - `api/main.py`: 285 → 268 (-17).
+  - Total across the five files: 1528 → 1238 (**-290** lines).
+- Slice sizes (`git diff --shortstat <A>..<B>`), after this pass:
+  - `main..01-foundation`: 868 insertions (was 902 before this pass;
+    -34 net from the durations.py simplification, since it only
+    touches that one file and nothing else changed on this slice).
+  - `01-foundation..02-logic`: 725 insertions, -3 deletions (was 873
+    insertions before; watchdog.py's rewrite is a large diff against
+    its own prior content, so raw insertions/deletions both changed
+    substantially even though the file shrank).
+  - `02-logic..03-api`: 468 insertions, -15 deletions (was 485/0
+    before; main.py's STATE_LOCK removal touches this slice).
+  - `03-api..04-cli`: 941 insertions, -30 deletions (was 931/0 before;
+    the CLI simplification touches this slice).
+  - Total `main..04-cli`: 2988 insertions, -34 deletions (was 3177/-34
+    before this pass).
+
+Status: **done**. Working tree clean on `feat/mc-watchdog-04-cli` after
+the final doc commit. Push/PR remain the user's decision, unchanged
+from before this pass.
+
 ## Next Step
 
-T4 done on `feat/mc-watchdog-03-api`. Next: T5 (CLI `mc-server`
-subcommand, dispatch refactor, `nexus_delete` + tests) on
-`feat/mc-watchdog-04-cli`.
+All tasks (T0-T6) complete, plus the mcstatus simplification pass and
+this second simplification pass (STATE_LOCK removal, CLI/durations
+consolidation). Next: manual verification on nexus-lan (arm/status/
+disable via CLI, poweroff after an empty threshold, restart after MC is
+killed) and opening the chained PRs (user decision — draft/no-merge
+tracker PR to `main`, then PR1..PR4 per branch, per the `auto-chain` /
+`feature-branch-chain` delivery strategy recorded above).

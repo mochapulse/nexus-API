@@ -16,6 +16,8 @@ telemetry   Launch a TUI dashboard (default: Nexus).
 health      Print the Nexus API health status.
 poweroff    Power off the Nexus API host.
 sleep       Put the Nexus API host to sleep.
+mc-server   Arm, disarm, or inspect the Minecraft server watchdog
+            (``active``, ``disable``, ``status`` subcommands).
 """
 
 from __future__ import annotations
@@ -25,6 +27,15 @@ import sys
 
 from api.config.paths import ensure_dotenv
 import api.config.runtime as runtime
+
+
+class _ThresholdAction(argparse.Action):
+    """``extra`` must be empty or exactly ``["threshold", "<duration>"]``."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values and (len(values) != 2 or values[0] != "threshold"):
+            parser.error("mc-server active: expected nothing or 'threshold <duration>'")
+        setattr(namespace, self.dest, values)
 
 
 def _telemetry_handler(args: argparse.Namespace) -> None:
@@ -67,6 +78,14 @@ examples:
   nexus-API wol             Wake ESP32 via WOL
   nexus-API poweroff        Shut down the API host
   nexus-API sleep           Suspend the API host
+  nexus-API mc-server active 5h threshold 10m
+                            Arm the watchdog for 5h, poweroff after 10m empty
+  nexus-API mc-server active 1h-30m
+                            Arm for 1h30m, default 30m threshold
+  nexus-API mc-server disable
+                            Disarm the watchdog now
+  nexus-API mc-server status
+                            Show watchdog status
 """
 
     parser = argparse.ArgumentParser(
@@ -123,6 +142,42 @@ examples:
         help="Print raw JSON instead of the TUI dashboard.",
     )
 
+    mc_server = sub.add_parser(
+        "mc-server",
+        help="Arm, disarm, or inspect the Minecraft server watchdog.",
+        description="Arm the server-side Minecraft watchdog, disarm it, or check its status.",
+    )
+    # Printed when `mc-server` is invoked with no subcommand.
+    mc_server.set_defaults(mc_parser=mc_server)
+    mc_sub = mc_server.add_subparsers(dest="mc_command")
+
+    mc_active = mc_sub.add_parser(
+        "active",
+        help="Arm the watchdog for a duration, with an optional threshold.",
+        description="Power off after <duration>, or sooner once MC is empty for <threshold>.",
+        epilog=(
+            "examples:\n"
+            "  nexus-API mc-server active 5h threshold 10m\n"
+            "  nexus-API mc-server active 1h-30m\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    mc_active.add_argument("duration", help="Active window duration, e.g. 5h, 1h-30m, 30m.")
+    mc_active.add_argument(
+        "extra",
+        nargs="*",
+        action=_ThresholdAction,
+        metavar="threshold <duration>",
+        help="Optional override for the empty-threshold, e.g. threshold 10m.",
+    )
+
+    mc_sub.add_parser("disable", help="Disarm the watchdog now.")
+    mc_sub.add_parser(
+        "status",
+        help="Show the watchdog status.",
+        description="Armed state, time remaining, empty counter, players, restart history.",
+    )
+
     return parser
 
 
@@ -146,6 +201,7 @@ def main() -> None:
     from api.cli.commands import (
         cmd_config,
         cmd_health,
+        cmd_mc_server,
         cmd_sleep,
         cmd_wol,
         cmd_poweroff,
@@ -158,11 +214,12 @@ def main() -> None:
         "poweroff": cmd_poweroff,
         "sleep": cmd_sleep,
         "telemetry": _telemetry_handler,
+        "mc-server": cmd_mc_server,
     }
 
     handler = handlers.get(args.command)
     if handler:
-        handler(args) if args.command == "telemetry" else handler()
+        handler(args)
     else:
         parser.print_help()
         sys.exit(1)
