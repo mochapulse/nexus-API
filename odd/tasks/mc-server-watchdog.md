@@ -52,7 +52,7 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
 - [x] T1
 - [x] T2
 - [x] T3
-- [ ] T4
+- [x] T4
 - [ ] T5
 - [ ] T6
 
@@ -125,8 +125,88 @@ Route trigger evidence: every T1-T6 touches 2+ non-trivial files → writer trig
     evaluated before the empty/poweroff branch in `tick()`. Confirmed
     by `test_expiry_beats_poweroff_when_both_due`.
 
+- Step A fix (`a6a6275 fix(mc): keep watchdog lock short and survive
+  iteration errors`) on `feat/mc-watchdog-02-logic`, applied before T4:
+  `watchdog_loop()` no longer holds `STATE_LOCK` across the blocking
+  SLP probe / `systemctl restart` / `systemctl poweroff` calls — it
+  snapshots `armed`/`arm_generation` under the lock, releases it for
+  I/O, then re-acquires and re-checks `arm_generation` (a new
+  `WatchdogState` field, bumped by every `arm()` call) so a disarm or
+  re-arm that races an in-flight probe never applies a stale decision.
+  Each iteration also runs inside `try/except Exception` so an
+  unexpected error is logged and retried next tick instead of killing
+  the polling task (`asyncio.CancelledError` is a `BaseException`, not
+  an `Exception`, and still propagates for clean shutdown — verified).
+  - Files: `api/mc/watchdog.py`, `api/test/test_mc_watchdog.py`.
+  - `python -m pytest -q`: 151 passed (149 before, 2 new:
+    probe-error-continues, disarm-during-in-flight-probe).
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (only
+    the pre-existing `libamd_smi.so` runtime warning).
+  - `git diff --stat`: 2 files changed, 148 insertions(+), 33
+    deletions(-).
+
+- T4 (`ec605c2 feat(api): expose minecraft watchdog endpoints and
+  lifespan task`) on `feat/mc-watchdog-03-api` (parent
+  `feat/mc-watchdog-02-logic`):
+  - Files: `api/config/runtime.py`, `api/.env.example`, `api/main.py`,
+    `cmd/install.sh`, `api/test/test_mc_endpoints.py`,
+    `templates/get-mc-server-watchdog.jsonc`,
+    `templates/post-mc-server-watchdog.jsonc`,
+    `templates/delete-mc-server-watchdog.jsonc`,
+    `IMPLEMENT_MC_WATCHDOG.md`.
+  - `MINECRAFT_PORT` (default `25565`) and `MINECRAFT_SERVICE` (default
+    `mc-server-create`) added to `runtime.py`; `.env.example` gained
+    the two new vars and lost its duplicated `ESP_IP/ESP_PORT/ESP_API_KEY`
+    block.
+  - `POST/DELETE/GET /api/v1/mc-server/watchdog` added on
+    `api_v1_router` (X-API-Key already enforced); production paths
+    call `mc_watchdog.arm/disarm/snapshot` under `STATE_LOCK` via
+    module-qualified access (`mc_watchdog.STATE`, not a rebound local)
+    so tests can reset the singleton per test. DEBUG returns the new
+    JSONC templates and never touches `STATE`; POST still validates its
+    body (422 on invalid `active_seconds`/`threshold_seconds`) even in
+    DEBUG.
+  - `lifespan()` now tracks a list of tasks (DuckDNS + the watchdog
+    loop) and starts `watchdog_loop("localhost", MINECRAFT_PORT,
+    MINECRAFT_SERVICE)` whenever `DEBUG` is off (the loop itself only
+    probes/acts once armed via the endpoints, and always starts
+    disarmed on boot per the in-memory-state design); all started
+    tasks are cancelled the same way on shutdown. `watchdog_loop` is
+    imported by name into `api.main` (`from api.mc.watchdog import
+    watchdog_loop`), matching the `duckdns_loop` pattern, so tests can
+    patch `main.watchdog_loop` directly.
+  - `cmd/install.sh`: added a second, separately-scoped polkit rule
+    file (`/etc/polkit-1/rules.d/20-nexus-mc-server.rules`) granting
+    `org.freedesktop.systemd1.manage-units` only for
+    `action.lookup("unit") == "${MC_UNIT}"` (default
+    `mc-server-create.service`, overridable via the `MC_UNIT` env var)
+    and verb `start`/`restart`, scoped to `${SERVICE_USER}`; `-dev`
+    still skips both polkit rule files.
+  - `IMPLEMENT_MC_WATCHDOG.md`: status payload's `last_disarm_reason`
+    comment now lists `"poweroff_failed"`; Decisions Log gained one
+    line recording that reason (not in the original design) and why it
+    exists (surface a failed poweroff via `status` instead of
+    retrying/re-failing every tick).
+  - `python -m pytest -q`: 172 passed (151 before this task, 21 new in
+    `api/test/test_mc_endpoints.py`: auth-required for all three verbs,
+    DEBUG stub-equals-template with `STATE` untouched, DEBUG still
+    validating the POST body, production arm/re-arm/disarm/idempotent-
+    disarm behavior, 422 matrix for invalid bodies, and two lifespan
+    tests patching `main.watchdog_loop` with an `AsyncMock` to assert
+    it is skipped in DEBUG and started with the right args in
+    production — no real socket probe or `systemctl` call in the
+    suite).
+  - `sphinx-build -b html docs/ docs/_build/html -W -q`: exit 0 (only
+    the pre-existing `libamd_smi.so` runtime warning; no new module was
+    added, so `docs/api.rst` is unchanged).
+  - `bash -n cmd/install.sh`: syntax OK.
+  - `git diff --stat` for the T4 commit: 9 files changed, 401
+    insertions(+), 11 deletions(-).
+  - Deviation: none beyond the `poweroff_failed` reason already
+    recorded under T3 and now reflected in the design doc.
+
 ## Next Step
 
-T3 done on `feat/mc-watchdog-02-logic`. Next: T4 (API endpoints + lifespan,
-runtime config, `.env.example`, templates, polkit in `install.sh` + tests)
-on `feat/mc-watchdog-03-api`.
+T4 done on `feat/mc-watchdog-03-api`. Next: T5 (CLI `mc-server`
+subcommand, dispatch refactor, `nexus_delete` + tests) on
+`feat/mc-watchdog-04-cli`.
