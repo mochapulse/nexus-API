@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+
+    <!-- Border Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.2" />
+    </linearGradient>
+
+    <!-- Cube Top Face (Nexus Core Top) -->
+    <linearGradient id="topFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Cube Left Face (Server Rack A) -->
+    <linearGradient id="leftFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Cube Right Face (Server Rack B) -->
+    <linearGradient id="rightFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0c4a6e" />
+    </linearGradient>
+
+    <!-- Glow Radial -->
+    <radialGradient id="nexusGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#00f2fe" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background Icon Base -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="url(#borderGrad)" stroke-width="1.5" />
+
+  <!-- Central Nexus Radial Glow -->
+  <circle cx="32" cy="32" r="22" fill="url(#nexusGlow)" />
+
+  <!-- Radiating LAN Lines & Network Nodes -->
+  <g stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" opacity="0.85">
+    <!-- Top Node -->
+    <line x1="32" y1="15" x2="32" y2="8" />
+    <!-- Bottom Node -->
+    <line x1="32" y1="49" x2="32" y2="56" />
+    <!-- Top-Left Node -->
+    <line x1="17" y1="23" x2="9" y2="19" />
+    <!-- Top-Right Node -->
+    <line x1="47" y1="23" x2="55" y2="19" />
+    <!-- Bottom-Left Node -->
+    <line x1="17" y1="41" x2="9" y2="45" />
+    <!-- Bottom-Right Node -->
+    <line x1="47" y1="41" x2="55" y2="45" />
+  </g>
+
+  <!-- LAN Network Satellite Dots -->
+  <g fill="#00f2fe">
+    <circle cx="32" cy="7" r="2" />
+    <circle cx="32" cy="57" r="2" />
+    <circle cx="8" cy="18.5" r="2" />
+    <circle cx="56" cy="18.5" r="2" />
+    <circle cx="8" cy="45.5" r="2" />
+    <circle cx="56" cy="45.5" r="2" />
+  </g>
+
+  <!-- Isometric Server Nexus Core -->
+  <!-- Top Face -->
+  <polygon points="32,15 47,23 32,31 17,23" fill="url(#topFace)" />
+  
+  <!-- Left Face (Primary Blade Unit) -->
+  <polygon points="17,23 32,31 32,49 17,41" fill="url(#leftFace)" stroke="#00f2fe" stroke-width="0.5" stroke-opacity="0.3" />
+  
+  <!-- Right Face (Secondary Blade Unit) -->
+  <polygon points="32,31 47,23 47,41 32,49" fill="url(#rightFace)" stroke="#00f2fe" stroke-width="0.5" stroke-opacity="0.3" />
+
+  <!-- Server Drive Slots & Circuit Traces -->
+  <!-- Left Rack Slots -->
+  <g stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round" opacity="0.8">
+    <line x1="21" y1="27.5" x2="28" y2="31" />
+    <line x1="21" y1="32.5" x2="28" y2="36" />
+    <line x1="21" y1="37.5" x2="28" y2="41" />
+  </g>
+
+  <!-- Right Rack Slots -->
+  <g stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round" opacity="0.9">
+    <line x1="36" y1="31" x2="43" y2="27.5" />
+    <line x1="36" y1="36" x2="43" y2="32.5" />
+    <line x1="36" y1="41" x2="43" y2="37.5" />
+  </g>
+
+  <!-- Core Nexus Gem (Center Intersection) -->
+  <polygon points="32,27 36,29 32,31 28,29" fill="#ffffff" opacity="0.9" />
+
+  <!-- LAN Activity LEDs (Status Lights) -->
+  <circle cx="44.5" cy="26.7" r="0.9" fill="#10b981" />
+  <circle cx="44.5" cy="31.7" r="0.9" fill="#00f2fe" />
+  <circle cx="44.5" cy="36.7" r="0.9" fill="#10b981" />
+</svg>
