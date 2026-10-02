@@ -204,7 +204,7 @@ class TestWaitForConnectivity:
         mock_writer.close = MagicMock()
         mock_writer.wait_closed = AsyncMock()
 
-        async def fake_open(host, port):
+        async def fake_open(host, port, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count < 3:
@@ -360,7 +360,7 @@ class TestConnectivityDelayState:
         mock_writer.wait_closed = AsyncMock()
         state.connectivity_delay_ms = None
 
-        async def fake_open(host, port):
+        async def fake_open(host, port, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:

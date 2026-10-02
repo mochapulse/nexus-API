@@ -16,6 +16,7 @@ duckdns_loop(domain, token)
 
 import asyncio
 import logging
+import socket
 import time
 
 import httpx
@@ -51,7 +52,8 @@ async def duckdns_loop(domain: str, token: str) -> None:
     """
     log.info("DuckDNS service started for %s.duckdns.org", domain)
 
-    async with httpx.AsyncClient() as client:
+    transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
+    async with httpx.AsyncClient(transport=transport) as client:
         while True:
             await _wait_for_connectivity(log)
 
@@ -85,7 +87,11 @@ async def _wait_for_connectivity(log: logging.Logger) -> None:
         try:
             t0 = time.monotonic()
             reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(_CONNECTIVITY_HOST, _CONNECTIVITY_PORT),
+                asyncio.open_connection(
+                    _CONNECTIVITY_HOST,
+                    _CONNECTIVITY_PORT,
+                    family=socket.AF_INET,
+                ),
                 timeout=_CONNECTIVITY_TIMEOUT,
             )
             writer.close()

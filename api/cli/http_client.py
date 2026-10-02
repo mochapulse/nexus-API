@@ -2,6 +2,7 @@
 
 Provides thin wrappers around :mod:`httpx` that handle base URLs,
 authentication headers, and TLS verification in one place.
+All connections are forced to IPv4 via ``local_address="0.0.0.0"``.
 
 Functions
 ---------
@@ -27,6 +28,17 @@ _ESP_BASE = f"https://{runtime.ESP_IP}:{runtime.ESP_PORT}"
 _NEXUS_TIMEOUT = httpx.Timeout(5.0)
 _ESP_TIMEOUT = httpx.Timeout(5.0)
 
+_nexus_client = httpx.Client(
+    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+    timeout=_NEXUS_TIMEOUT,
+)
+
+_esp_client = httpx.Client(
+    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+    verify=False,
+    timeout=_ESP_TIMEOUT,
+)
+
 
 def nexus_get(path: str) -> httpx.Response:
     """GET ``/api/v1/{path}`` on the Nexus API server.
@@ -39,10 +51,9 @@ def nexus_get(path: str) -> httpx.Response:
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
-    return httpx.get(
+    return _nexus_client.get(
         f"{_NEXUS_BASE}/{path}",
         headers={"X-API-Key": runtime.API_KEY},
-        timeout=_NEXUS_TIMEOUT,
     )
 
 
@@ -61,11 +72,10 @@ def nexus_post(path: str, json: dict | None = None) -> httpx.Response:
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
-    return httpx.post(
+    return _nexus_client.post(
         f"{_NEXUS_BASE}/{path}",
         headers={"X-API-Key": runtime.API_KEY},
         json=json,
-        timeout=_NEXUS_TIMEOUT,
     )
 
 
@@ -81,10 +91,9 @@ def nexus_delete(path: str) -> httpx.Response:
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
-    return httpx.delete(
+    return _nexus_client.delete(
         f"{_NEXUS_BASE}/{path}",
         headers={"X-API-Key": runtime.API_KEY},
-        timeout=_NEXUS_TIMEOUT,
     )
 
 
@@ -99,11 +108,9 @@ def esp_get(path: str) -> httpx.Response:
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
-    return httpx.get(
+    return _esp_client.get(
         f"{_ESP_BASE}/{path}",
         headers={"X-API-Key": runtime.ESP_API_KEY},
-        verify=False,
-        timeout=_ESP_TIMEOUT,
     )
 
 
@@ -118,9 +125,7 @@ def esp_post(path: str) -> httpx.Response:
     Returns:
         :class:`httpx.Response` — caller should handle status codes.
     """
-    return httpx.post(
+    return _esp_client.post(
         f"{_ESP_BASE}/{path}",
         headers={"X-API-Key": runtime.ESP_API_KEY},
-        verify=False,
-        timeout=_ESP_TIMEOUT,
     )
