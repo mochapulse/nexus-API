@@ -15,12 +15,12 @@ duckdns_loop(domain, token)
 """
 
 import asyncio
-import logging
 import socket
 import time
 
 import httpx
 
+from api.config.logger import get_logger
 from api.net import state
 from api.net.utils import update_duckdns
 
@@ -31,7 +31,7 @@ _CONNECTIVITY_POLL_INTERVAL = 10
 _UPDATE_RETRY_INTERVAL = 300
 _UPDATE_IDLE_INTERVAL = 18_000
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 async def duckdns_loop(domain: str, token: str) -> None:
@@ -55,7 +55,7 @@ async def duckdns_loop(domain: str, token: str) -> None:
     transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
     async with httpx.AsyncClient(transport=transport) as client:
         while True:
-            await _wait_for_connectivity(log)
+            await _wait_for_connectivity()
 
             result = await update_duckdns(domain, token, client)
             log.info(
@@ -75,7 +75,7 @@ async def duckdns_loop(domain: str, token: str) -> None:
                 await asyncio.sleep(_UPDATE_RETRY_INTERVAL)
 
 
-async def _wait_for_connectivity(log: logging.Logger) -> None:
+async def _wait_for_connectivity() -> None:
     """Block until a TCP connection to Google succeeds.
 
     Probes ``google.com:443`` with :func:`asyncio.open_connection`.  The

@@ -196,7 +196,7 @@ class TestWaitForConnectivity:
             new_callable=AsyncMock,
             return_value=(MagicMock(), mock_writer),
         ):
-            await _wait_for_connectivity(MagicMock())
+            await _wait_for_connectivity()
 
     async def test_retries_on_failure_then_succeeds(self):
         call_count = 0
@@ -223,7 +223,7 @@ class TestWaitForConnectivity:
                     "api.net.duckdns_service.asyncio.sleep",
                     new_callable=AsyncMock,
                 ):
-                    await _wait_for_connectivity(MagicMock())
+                    await _wait_for_connectivity()
 
         assert call_count == 3
 
@@ -304,7 +304,7 @@ class TestDuckdnsLoop:
         connectivity_called = False
         update_called = False
 
-        async def fake_connectivity(log):
+        async def fake_connectivity():
             nonlocal connectivity_called
             connectivity_called = True
 
@@ -347,7 +347,7 @@ class TestConnectivityDelayState:
             new_callable=AsyncMock,
             return_value=(MagicMock(), mock_writer),
         ):
-            await _wait_for_connectivity(MagicMock())
+            await _wait_for_connectivity()
 
         assert state.connectivity_delay_ms is not None
         assert isinstance(state.connectivity_delay_ms, int)
@@ -379,7 +379,7 @@ class TestConnectivityDelayState:
                     "api.net.duckdns_service.asyncio.sleep",
                     new_callable=AsyncMock,
                 ):
-                    await _wait_for_connectivity(MagicMock())
+                    await _wait_for_connectivity()
 
         assert state.connectivity_delay_ms is not None
         assert call_count == 2

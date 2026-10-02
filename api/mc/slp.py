@@ -5,12 +5,13 @@ Java status query. Replaces a hand-written Server List Ping client: see
 ``IMPLEMENT_MC_WATCHDOG.md`` for why (user request to simplify).
 """
 
-import logging
 from dataclasses import dataclass
 
 from mcstatus import JavaServer
 
-log = logging.getLogger(__name__)
+from api.config.logger import get_logger
+
+log = get_logger(__name__)
 
 
 @dataclass(frozen=True)

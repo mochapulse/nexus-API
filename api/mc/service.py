@@ -7,10 +7,11 @@ restart it. Every call runs with an explicit timeout and never uses a
 shell.
 """
 
-import logging
 import subprocess
 
-log = logging.getLogger(__name__)
+from api.config.logger import get_logger
+
+log = get_logger(__name__)
 
 
 def is_active(unit: str) -> str:

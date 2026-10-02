@@ -15,7 +15,6 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 import asyncio
-import logging
 from contextlib import asynccontextmanager
 import psutil
 import time
@@ -29,12 +28,13 @@ from api.mc import slp, watchdog as mc_watchdog
 from api.mc.watchdog import watchdog_loop
 from api.net import state
 from api.net.duckdns_service import duckdns_loop
+from api.config.logger import get_logger, configure_uvicorn_logging
 
 ensure_dotenv()
 
 import api.config.runtime as runtime
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
     endpoints' DEBUG-gating. On shutdown every started task is
     cancelled so the process exits cleanly.
     """
+    configure_uvicorn_logging()
     tasks: list[asyncio.Task] = []
     if not runtime.DEBUG and runtime.DUCKDNS_DOMAIN and runtime.DUCKDNS_TOKEN:
         tasks.append(

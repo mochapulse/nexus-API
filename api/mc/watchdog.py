@@ -23,15 +23,15 @@ discarded instead of applied to a state it no longer reflects.
 
 import asyncio
 import enum
-import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from api.config.logger import get_logger
 from api.hw import power
 from api.mc import service, slp
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 #: Seconds between probes while armed.
 PROBE_INTERVAL = 30

@@ -8,11 +8,14 @@ import asyncio
 import glob
 import os
 import time
+import warnings
 from pathlib import Path
 
 import orjson
 import psutil
-import pynvml
+
+warnings.filterwarnings("ignore", message=".*pynvml package is deprecated.*")
+import pynvml  # noqa: E402
 
 try:
     import amdsmi
