@@ -56,7 +56,7 @@ def restart(unit: str) -> str | None:
             check=True,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
         )
         return None
     except subprocess.CalledProcessError as exc:
